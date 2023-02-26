@@ -26,11 +26,11 @@ const app = require('./app');
 */
 
 // Connecting to local DB
-if (process.env.DATABASE_LOCAL === 'development') {
+if (process.env.NODE_ENV === 'development') {
 	mongoose.connect(process.env.DATABASE_LOCAL).then(() => {
 		console.log('DB Connection Successful');
 	});
-} else if (process.env.DATABASE_LOCAL === 'staging') {
+} else if (process.env.NODE_ENV === 'staging') {
 	const DB_CONNECTION_STRING = process.env.DATABASE.replace(
 		'<PASSWORD>',
 		encodeURIComponent(process.env.DATABASE_PASSWORD)
