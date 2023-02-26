@@ -26,10 +26,20 @@ const app = require('./app');
 */
 
 // Connecting to local DB
+if (process.env.DATABASE_LOCAL === 'development') {
+	mongoose.connect(process.env.DATABASE_LOCAL).then(() => {
+		console.log('DB Connection Successful');
+	});
+} else if (process.env.DATABASE_LOCAL === 'staging') {
+	const DB_CONNECTION_STRING = process.env.DATABASE.replace(
+		'<PASSWORD>',
+		encodeURIComponent(process.env.DATABASE_PASSWORD)
+	);
 
-mongoose.connect(process.env.DATABASE_LOCAL).then(() => {
-	console.log('DB Connection Successful');
-});
+	mongoose.connect(DB_CONNECTION_STRING).then(() => {
+		console.log('DB Connection Successful');
+	});
+}
 
 const port = process.env.PORT || 4000;
 
