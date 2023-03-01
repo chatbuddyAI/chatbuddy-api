@@ -26,7 +26,10 @@ const app = require('./app');
 */
 
 // Connecting to local DB
-if (process.env.NODE_ENV === 'development') {
+if (
+	process.env.NODE_ENV === 'development' ||
+	process.env.NODE_ENV === 'mobile'
+) {
 	mongoose.connect(process.env.DATABASE_LOCAL).then(() => {
 		console.log('DB Connection Successful');
 	});
