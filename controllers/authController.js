@@ -12,7 +12,7 @@ const createSingedToken = (id) =>
 		expiresIn: process.env.JWT_EXPIRES_IN,
 	});
 
-const createSendToken = (user, statusCode, res) => {
+const createSendToken = catchAsync(async (user, statusCode, res) => {
 	const token = createSingedToken(user._id);
 	const cookieOptions = {
 		expires: new Date(
@@ -20,6 +20,8 @@ const createSendToken = (user, statusCode, res) => {
 		),
 		httpOnly: true,
 	};
+	const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+
 	if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
 
 	res.cookie('jwt', token, cookieOptions);
@@ -30,11 +32,12 @@ const createSendToken = (user, statusCode, res) => {
 	res.status(statusCode).json({
 		status: 'success',
 		token,
+		expiresIn: decoded.exp,
 		data: {
 			user,
 		},
 	});
-};
+});
 
 exports.register = catchAsync(async (req, res, next) => {
 	const newUser = await User.create({
