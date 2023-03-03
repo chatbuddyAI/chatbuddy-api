@@ -5,6 +5,8 @@ const AppError = require('../utils/appError');
 const APIFeatures = require('../utils/apiFeatures');
 
 const catchAsync = require('../utils/catchAsync');
+const { successResponse } = require('../utils/apiResponder');
+const { HTTP_OK, HTTP_NOT_FOUND } = require('../utils/responseStatus');
 
 const configuration = new Configuration({
 	apiKey: process.env.OPENAI_API_KEY,
@@ -33,7 +35,7 @@ exports.sendNewMessage = catchAsync(async (req, res, next) => {
 	});
 
 	// Create a new message document for the user's message
-	const newMessage = await Message.create({
+	await Message.create({
 		chat: chat._id,
 		sender: 'user',
 		message: userMessage,
@@ -69,14 +71,12 @@ exports.sendNewMessage = catchAsync(async (req, res, next) => {
 	chat.total_tokens = response.data.usage.total_tokens;
 	await chat.save({ validateBeforeSave: false });
 
-	// Return the chatbot response and the user message in the response
-	res.status(200).json({
-		status: 'success',
-		data: {
-			chat_uuid: chat.uuid,
-			chatbotResponse: chatbotResponse,
-			userMessage: newMessage,
-		},
+	// Return the chatbot response
+	successResponse({
+		response: res,
+		message: 'New message sent and new chat created successfully',
+		code: HTTP_OK,
+		data: chatbotResponse,
 	});
 });
 
@@ -90,7 +90,7 @@ exports.sendMessageInChat = catchAsync(async (req, res, next) => {
 		return next(
 			new AppError(
 				'No chat found with that ID or the chat does not belong to the user',
-				404
+				HTTP_NOT_FOUND
 			)
 		);
 	}
@@ -102,7 +102,7 @@ exports.sendMessageInChat = catchAsync(async (req, res, next) => {
 	const userMessage = req.body.message;
 
 	// Create a new message document for the user's message
-	const newMessage = await Message.create({
+	await Message.create({
 		chat: chat._id,
 		sender: 'user',
 		message: userMessage,
@@ -146,13 +146,13 @@ exports.sendMessageInChat = catchAsync(async (req, res, next) => {
 	await chat.save({ validateBeforeSave: false });
 
 	console.log(chat.total_tokens);
-	// Return the chatbot response and the user message in the response
-	res.status(200).json({
-		status: 'success',
-		data: {
-			chatbotResponse: chatbotResponse,
-			userMessage: newMessage,
-		},
+	// Return the chatbot response
+
+	successResponse({
+		response: res,
+		message: 'Message sent in chat successfully',
+		code: HTTP_OK,
+		data: chatbotResponse,
 	});
 });
 
@@ -164,7 +164,7 @@ exports.getAllChatMessages = catchAsync(async (req, res, next) => {
 		return next(
 			new AppError(
 				'No chat found with that ID or the chat does not belong to the user',
-				404
+				HTTP_NOT_FOUND
 			)
 		);
 	}
@@ -177,9 +177,10 @@ exports.getAllChatMessages = catchAsync(async (req, res, next) => {
 
 	const messages = await features.query;
 
-	res.status(200).json({
-		status: 'success',
-		count: messages.length,
+	successResponse({
+		response: res,
+		message: 'Retrived all messages in user chat successfully',
+		code: HTTP_OK,
 		data: messages,
 	});
 });

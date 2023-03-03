@@ -1,3 +1,4 @@
+const { failureResponse } = require('../utils/apiResponder');
 const AppError = require('../utils/appError');
 const {
 	HTTP_UNPROCESSABLE_ENTITY,
@@ -22,20 +23,24 @@ const handleValidatorErrorDB = (err) => {
 	return new AppError(message, HTTP_UNPROCESSABLE_ENTITY);
 };
 const sendErrorDev = (error, res) => {
-	res.status(error.statusCode).json({
-		status: error.status,
-		error,
+	failureResponse({
+		response: res,
 		message: error.message,
-		stack: error.stack,
+		code: error.statusCode,
+		data: {
+			error,
+			stack: error.stack,
+		},
 	});
 };
 
 const sendErrorProd = (error, res) => {
 	// Operatiional, trusted error: send message to client
 	if (error.isOperational) {
-		res.status(error.statusCode).json({
-			status: error.status,
+		failureResponse({
+			response: res,
 			message: error.message,
+			code: error.statusCode,
 		});
 
 		//Programming or other unknown error: dont't send leak error details
@@ -44,9 +49,11 @@ const sendErrorProd = (error, res) => {
 		console.error('ERROR: ', error);
 
 		//send generic message
-		res.status(HTTP_INTERNAL_SERVER_ERROR).json({
-			status: 'error',
-			message: 'Something went wrong!',
+		failureResponse({
+			response: res,
+			message:
+				'Something went wrong! Try again. If it continues, contact support.',
+			code: HTTP_INTERNAL_SERVER_ERROR,
 		});
 	}
 };

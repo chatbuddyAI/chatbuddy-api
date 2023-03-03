@@ -3,6 +3,12 @@ const AppError = require('../utils/appError');
 const APIFeatures = require('../utils/apiFeatures');
 const catchAsync = require('../utils/catchAsync');
 const Message = require('../models/messageModel');
+const { successResponse } = require('../utils/apiResponder');
+const {
+	HTTP_OK,
+	HTTP_NOT_FOUND,
+	HTTP_NO_CONTENT,
+} = require('../utils/responseStatus');
 
 /**
  * This function creates a new object based on the given 'obj' and filters out any fields that are not specified as 'allowedFields'.
@@ -38,6 +44,12 @@ exports.createChat = catchAsync(async (req, res, next) => {
 			chat: chat,
 		},
 	});
+	successResponse({
+		response: res,
+		message: 'New message sent and new chat created successfully',
+		code: HTTP_OK,
+		data: chat,
+	});
 });
 
 exports.getAllChats = catchAsync(async (req, res, next) => {
@@ -52,12 +64,11 @@ exports.getAllChats = catchAsync(async (req, res, next) => {
 	// .select('-lastPrompt') makes sure that the lastPrompt field is not returned with the result
 	const chats = await features.query.select('-lastPrompt');
 
-	res.status(200).json({
-		status: 'success',
-		count: chats.length,
-		data: {
-			data: chats,
-		},
+	successResponse({
+		response: res,
+		message: 'Retrieved all chats successfully',
+		code: HTTP_OK,
+		data: chats,
 	});
 });
 
@@ -67,24 +78,31 @@ exports.getChat = catchAsync(async (req, res, next) => {
 	const popOptions = ['user'];
 	if (popOptions) query = query.populate(popOptions);
 
-	const doc = await query;
+	const chat = await query;
 
-	if (isArrayEmpty(doc)) {
-		return next(new AppError('No document found with that ID', 404));
+	if (isArrayEmpty(chat)) {
+		return next(new AppError('No chat found with that ID', HTTP_NOT_FOUND));
 	}
 	res.status(200).json({
 		status: 'success',
 		data: {
-			data: doc,
+			data: chat,
 		},
+	});
+
+	successResponse({
+		response: res,
+		message: 'Retrieved chat successfully',
+		code: HTTP_OK,
+		data: chat,
 	});
 });
 
 exports.updateChat = catchAsync(async (req, res, next) => {
-	let doc = await Chat.find({ uuid: req.params.uuid, user: req.user.id });
+	let chat = await Chat.find({ uuid: req.params.uuid, user: req.user.id });
 
-	if (isArrayEmpty(doc)) {
-		return next(new AppError('No document found with that ID', 404));
+	if (isArrayEmpty(chat)) {
+		return next(new AppError('No chat found with that ID', HTTP_NOT_FOUND));
 	}
 
 	const filteredBody = filteredObject(req.body, 'title');
@@ -95,13 +113,20 @@ exports.updateChat = catchAsync(async (req, res, next) => {
 		{ new: true, runValidators: true }
 	);
 
-	doc = await Chat.find({ uuid: req.params.uuid, user: req.user.id });
+	chat = await Chat.find({ uuid: req.params.uuid, user: req.user.id });
 
 	res.status(200).json({
 		status: 'success',
 		data: {
-			data: doc,
+			data: chat,
 		},
+	});
+
+	successResponse({
+		response: res,
+		message: 'Updated chat successfully',
+		code: HTTP_OK,
+		data: chat,
 	});
 });
 
@@ -109,17 +134,17 @@ exports.deleteChat = catchAsync(async (req, res, next) => {
 	let chat = await Chat.find({ uuid: req.params.uuid, user: req.user.id });
 
 	if (isArrayEmpty(chat)) {
-		return next(new AppError('No document found with that ID', 404));
+		return next(new AppError('No chat found with that ID', HTTP_NOT_FOUND));
 	}
 
-	const messages = await Message.deleteMany({ chat: chat._id });
-	console.log(messages);
+	await Message.deleteMany({ chat: chat._id });
+
 	chat = await Chat.deleteOne({ uuid: req.params.uuid, user: req.user.id });
 
-	res.status(204).json({
-		status: 'success',
-		data: {
-			data: chat,
-		},
+	successResponse({
+		response: res,
+		message: 'Deleted chat successfully',
+		code: HTTP_NO_CONTENT,
+		data: chat,
 	});
 });
