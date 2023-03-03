@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const validator = require('validator');
 
 const invitationSchema = new mongoose.Schema(
 	{
@@ -6,6 +7,7 @@ const invitationSchema = new mongoose.Schema(
 			type: String,
 			required: true,
 			unique: true,
+			validate: [validator.isEmail, 'Please enter a valid email address'],
 			lowercase: true,
 			trim: true,
 		},

@@ -6,6 +6,15 @@ const User = require('../models/userModel');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const sendEmail = require('../utils/email');
+const { successResponse } = require('../utils/apiResponder');
+const {
+	HTTP_OK,
+	HTTP_BAD_REQUEST,
+	HTTP_UNAUTHORIZED,
+	HTTP_FORBIDDEN,
+	HTTP_NOT_FOUND,
+	HTTP_INTERNAL_SERVER_ERROR,
+} = require('../utils/responseStatus');
 
 const createSingedToken = (id) =>
 	jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -29,12 +38,14 @@ const createSendToken = catchAsync(async (user, statusCode, res) => {
 	// Remove password from output
 	user.password = undefined;
 
-	res.status(statusCode).json({
-		status: 'success',
-		token,
-		expiresIn: decoded.exp,
+	successResponse({
+		response: res,
+		message: 'User authenticated successfully',
+		code: HTTP_OK,
 		data: {
 			user,
+			token,
+			expiresIn: decoded.exp,
 		},
 	});
 });
@@ -55,13 +66,15 @@ exports.login = catchAsync(async (req, res, next) => {
 
 	// Check if email and password exist
 	if (!email || !password) {
-		return next(new AppError('Please provide email and password!', 400));
+		return next(
+			new AppError('Please provide email and password!', HTTP_BAD_REQUEST)
+		);
 	}
 
 	const user = await User.findOne({ email: email }).select('+password');
 
 	if (!user || !(await bcrypt.compare(password, user.password)))
-		return next(new AppError('Invalid login details', 401));
+		return next(new AppError('Invalid login details', HTTP_UNAUTHORIZED));
 
 	createSendToken(user, 200, res);
 });
@@ -79,7 +92,10 @@ exports.protect = catchAsync(async (req, res, next) => {
 
 	if (!token) {
 		return next(
-			new AppError('You are not logged in! Please login to get access', 401)
+			new AppError(
+				'You are not logged in! Please login to get access',
+				HTTP_UNAUTHORIZED
+			)
 		);
 	}
 	// verify the token
@@ -90,7 +106,7 @@ exports.protect = catchAsync(async (req, res, next) => {
 		return next(
 			new AppError(
 				'The user belonging to this token does not exist anymore.',
-				401
+				HTTP_UNAUTHORIZED
 			)
 		);
 	}
@@ -98,7 +114,10 @@ exports.protect = catchAsync(async (req, res, next) => {
 	// check if user changed password aftr token was issued
 	if (user.changedPasswordAfter(decoded.iat)) {
 		return next(
-			new AppError('User recently changed password! Please login again.', 401)
+			new AppError(
+				'User recently changed password! Please login again.',
+				HTTP_UNAUTHORIZED
+			)
 		);
 	}
 
@@ -112,7 +131,10 @@ exports.restrictedTo =
 	(req, res, next) => {
 		if (!roles.includes(req.user.role)) {
 			return next(
-				new AppError('You do not have permission to perform this action.', 403)
+				new AppError(
+					'You do not have permission to perform this action.',
+					HTTP_FORBIDDEN
+				)
 			);
 		}
 		next();
@@ -124,7 +146,9 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 	const user = await User.findOne({ email });
 
 	if (!user) {
-		return next(new AppError('There is no user with this email address', 404));
+		return next(
+			new AppError('There is no user with this email address', HTTP_NOT_FOUND)
+		);
 	}
 	// gemerate a token
 	const resetToken = user.createPasswordResetToken();
@@ -144,9 +168,10 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 			message,
 		});
 
-		res.status(200).json({
-			status: 'success',
+		successResponse({
+			response: res,
 			message: 'Password reset token sent to email',
+			code: HTTP_OK,
 		});
 	} catch (err) {
 		user.decomissionPasswordResetToken();
@@ -155,7 +180,7 @@ exports.forgotPassword = catchAsync(async (req, res, next) => {
 		return next(
 			new AppError(
 				'There was an error sending the email, try again later!',
-				500
+				HTTP_INTERNAL_SERVER_ERROR
 			)
 		);
 	}
@@ -176,7 +201,7 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 
 	// if user is not found fail with invalid token
 	if (!user) {
-		return next(new AppError('Invalid or Expired Token', 403));
+		return next(new AppError('Invalid or Expired Token', HTTP_FORBIDDEN));
 	}
 
 	// update password
@@ -193,11 +218,18 @@ exports.resetPassword = catchAsync(async (req, res, next) => {
 	// Log user in
 	const token = createSingedToken(user._id);
 
+	const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+
 	// send success response
-	return res.status(200).json({
-		status: 'success',
+	successResponse({
+		response: res,
 		message: 'Your password has been reset',
-		token,
+		code: HTTP_OK,
+		data: {
+			user,
+			token,
+			expiresIn: decoded.exp,
+		},
 	});
 	// respond invalid token
 });
@@ -209,7 +241,7 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
 	const currentPassword = req.body.currentPassword || 'wrong password';
 	// check if old/current password correct
 	if (!(await bcrypt.compare(currentPassword, user.password)))
-		return next(new AppError('Incorrect current password', 401));
+		return next(new AppError('Incorrect current password', HTTP_UNAUTHORIZED));
 
 	// update password
 	user.password = req.body.password;
@@ -218,11 +250,17 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
 
 	// send new jwt token
 	const token = createSingedToken(user._id);
+	const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
 	// send success response
-	return res.status(200).json({
-		status: 'success',
+	successResponse({
+		response: res,
 		message: 'Your password has been changed',
-		token,
+		code: HTTP_OK,
+		data: {
+			user,
+			token,
+			expiresIn: decoded.exp,
+		},
 	});
 });
