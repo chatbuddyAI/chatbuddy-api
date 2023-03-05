@@ -21,8 +21,8 @@ const truncateMessage = (msg) => {
 	do {
 		shortMessage += `${words[i]} `;
 		i++;
-	} while (i < 10 && i < words.length);
-	return `${shortMessage}...`;
+	} while (i < 5 && i < words.length);
+	return `${shortMessage}`;
 };
 
 exports.sendNewMessage = catchAsync(async (req, res, next) => {
