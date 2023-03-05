@@ -75,7 +75,7 @@ exports.getAllChats = catchAsync(async (req, res, next) => {
 exports.getChat = catchAsync(async (req, res, next) => {
 	let query = Chat.find({ uuid: req.params.uuid, user: req.user.id });
 	// populate options replaces the user id referenced in the chat collection with the user document
-	const popOptions = ['user'];
+	const popOptions = ['members'];
 	if (popOptions) query = query.populate(popOptions);
 
 	const chat = await query;

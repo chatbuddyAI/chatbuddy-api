@@ -59,12 +59,19 @@ exports.sendNewMessage = catchAsync(async (req, res, next) => {
 	const chatbotMessage = response.data.choices[0].text;
 
 	// Create a new message document for the chatbot's response
-	const chatbotResponse = await Message.create({
+	let chatbotResponse = await Message.create({
 		chat: chat._id,
 		sender: 'chatbot',
 		message: chatbotMessage,
 		isBotReply: true,
 	});
+
+	let query = Message.find({ _id: chatbotResponse._id });
+	// populate options replaces the user id referenced in the chat collection with the user document
+	const popOptions = ['chat'];
+	if (popOptions) query = query.populate(popOptions);
+
+	chatbotResponse = await query;
 
 	// Update the chat document with the new last prompt and total tokens used
 	chat.lastPrompt = `${prompt}${chatbotMessage}`;
