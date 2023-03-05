@@ -61,8 +61,10 @@ exports.getAllChats = catchAsync(async (req, res, next) => {
 		.limitFields()
 		.paginate();
 
+	const popOptions = ['members'];
+
 	// .select('-lastPrompt') makes sure that the lastPrompt field is not returned with the result
-	const chats = await features.query.select('-lastPrompt');
+	const chats = await features.query.select('-lastPrompt').populate(popOptions);
 
 	successResponse({
 		response: res,
