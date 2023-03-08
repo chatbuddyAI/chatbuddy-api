@@ -7,6 +7,11 @@ const APIFeatures = require('../utils/apiFeatures');
 const catchAsync = require('../utils/catchAsync');
 const { successResponse } = require('../utils/apiResponder');
 const { HTTP_OK, HTTP_NOT_FOUND } = require('../utils/responseStatus');
+const {
+	getToken,
+	truncatePrompt,
+	CHAT_BUDDY_TOKEN_CAP,
+} = require('../utils/tokenizer');
 
 const configuration = new Configuration({
 	apiKey: process.env.OPENAI_API_KEY,
@@ -43,9 +48,14 @@ exports.sendNewMessage = catchAsync(async (req, res, next) => {
 
 	// Determine the prompt for the OpenAI API call. If there is a last prompt,
 	// add the user message to it, otherwise use the user message as the prompt
-	const prompt = chat.lastPrompt
+	let prompt = chat.lastPrompt
 		? `${chat.lastPrompt}\n\n${userMessage}\n`
 		: `${userMessage}\n`;
+
+	// checks if number of token is above 2000 and if it is, we proceed to remove the topmost 500 tokens and return the truncated string
+	if (getToken(prompt) >= CHAT_BUDDY_TOKEN_CAP) {
+		prompt = truncatePrompt(prompt);
+	}
 
 	// Call the OpenAI API to generate a response
 	const response = await openai.createCompletion({
