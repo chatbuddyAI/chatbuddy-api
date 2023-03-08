@@ -34,6 +34,8 @@ exports.sendNewMessage = catchAsync(async (req, res, next) => {
 	// Get the message that the user sent
 	const userMessage = req.body.message;
 
+	//TODO: Do a moderation check of the message with OpenAi's moderation endpoint
+
 	const chat = await Chat.create({
 		user: req.user.id,
 		title: truncateMessage(userMessage),
