@@ -197,24 +197,6 @@ const generateChatbotResponseFromOpenAi = async (
 	return chatbotResponse;
 };
 
-// exports.sendNewMessage = catchAsync(async (req, res, next) => {
-// 	const chat = await newChatMessageAndModerationCheck(req, next);
-
-// 	const prompts = await getPrompts(chat._id);
-
-// 	const chatbotResponse = await generateChatbotResponseFromOpenAi(
-// 		CHAT_BOT_KNOWLEDGE.concat(prompts),
-// 		chat._id
-// 	);
-// 	// Return the chatbot response
-// 	successResponse({
-// 		response: res,
-// 		message: 'New message sent and new chat created successfully',
-// 		code: HTTP_OK,
-// 		data: chatbotResponse,
-// 	});
-// });
-
 exports.sendMessage = catchAsync(async (req, res, next) => {
 	const chat = await newChatMessageAndModerationCheck(req, next);
 
