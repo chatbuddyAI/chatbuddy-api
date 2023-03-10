@@ -1,15 +1,15 @@
 const { encode, decode } = require('gpt-3-encoder');
 
-const OPENAI_TOKEN_CAP = 4092;
-const CHAT_BUDDY_TOKEN_CAP = 2023;
+exports.CHAT_BUDDY_TOKEN_CAP = 3092;
+exports.OPENAI_TOKEN_CAP = 4092;
 
 /**
- * The getToken function takes a string message as input, encodes it into tokens using the imported encode function,
+ * The getTokens function takes a string message as input, encodes it into tokens using the imported encode function,
  * and returns the length of the resulting array.
  * @param {string} message
- * @returns number
+ * @returns number of tokens in message
  */
-exports.getToken = (message) => encode(message).length;
+exports.getTokens = (message) => encode(message).length;
 
 /**
  * The truncatePrompt function takes a prompt string and an optional number of tokens to remove from it (noOfTokens).
@@ -23,5 +23,3 @@ exports.truncatePrompt = (prompt, noOfTokens = 592) =>
 	decode(
 		encode(prompt).slice(noOfTokens) // remove top noOfTokens from prompt
 	);
-
-module.exports = { OPENAI_TOKEN_CAP, CHAT_BUDDY_TOKEN_CAP };
