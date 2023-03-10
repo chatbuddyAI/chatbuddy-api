@@ -38,12 +38,6 @@ exports.createChat = catchAsync(async (req, res, next) => {
 
 	const chat = await Chat.create(filteredBody);
 
-	res.status(201).json({
-		status: 'success',
-		data: {
-			chat: chat,
-		},
-	});
 	successResponse({
 		response: res,
 		message: 'New message sent and new chat created successfully',
@@ -85,12 +79,6 @@ exports.getChat = catchAsync(async (req, res, next) => {
 	if (isArrayEmpty(chat)) {
 		return next(new AppError('No chat found with that ID', HTTP_NOT_FOUND));
 	}
-	res.status(200).json({
-		status: 'success',
-		data: {
-			data: chat,
-		},
-	});
 
 	successResponse({
 		response: res,
@@ -109,20 +97,13 @@ exports.updateChat = catchAsync(async (req, res, next) => {
 
 	const filteredBody = filteredObject(req.body, 'title');
 
-	await Chat.updateOne(
+	chat = await Chat.findOneAndUpdate(
 		{ uuid: req.params.uuid, user: req.user.id },
 		filteredBody,
 		{ new: true, runValidators: true }
 	);
 
-	chat = await Chat.find({ uuid: req.params.uuid, user: req.user.id });
-
-	res.status(200).json({
-		status: 'success',
-		data: {
-			data: chat,
-		},
-	});
+	// chat = await Chat.find({ uuid: req.params.uuid, user: req.user.id });
 
 	successResponse({
 		response: res,
