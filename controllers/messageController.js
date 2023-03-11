@@ -172,7 +172,7 @@ const generateChatbotResponseFromOpenAi = async (
 	chatId
 ) => {
 	const responseMessage = await openai.createChatCompletion({
-		model: 'gpt-3.5-turbo-0301',
+		model: process.env.OPENAI_GPT_MODEL,
 		messages: chatRequestMessage,
 	});
 
