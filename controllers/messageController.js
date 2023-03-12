@@ -190,7 +190,7 @@ const generateChatbotResponseFromOpenAi = async (
 		isBotReply: true,
 	});
 
-	chatbotResponse = Message.find({ _id: chatbotResponse._id });
+	chatbotResponse = Message.findById(chatbotResponse._id);
 
 	// populate options replaces the user id referenced in the chat collection with the user document
 	const popOptions = ['chat'];
