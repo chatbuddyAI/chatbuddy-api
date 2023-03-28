@@ -175,7 +175,6 @@ const generateChatbotResponseFromOpenAi = async (
 		model: process.env.OPENAI_GPT_MODEL,
 		temperature: process.env.OPENAI_MODEL_TEMPERATURE * 1, //i am multiplying by 1 to convert it to int
 		max_tokens: 256,
-		top_p: 1,
 		messages: chatRequestMessage,
 	});
 
