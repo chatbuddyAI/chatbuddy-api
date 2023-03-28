@@ -173,7 +173,7 @@ const generateChatbotResponseFromOpenAi = async (
 ) => {
 	const responseMessage = await openai.createChatCompletion({
 		model: process.env.OPENAI_GPT_MODEL,
-		temperature: 0.7,
+		temperature: process.env.OPENAI_MODEL_TEMPERATURE,
 		max_tokens: 256,
 		top_p: 1,
 		messages: chatRequestMessage,
