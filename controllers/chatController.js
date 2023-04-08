@@ -1,8 +1,9 @@
 const Chat = require('../models/chatModel');
 const AppError = require('../utils/appError');
 const APIFeatures = require('../utils/apiFeatures');
-const catchAsync = require('../utils/catchAsync');
+const ChatRequestMessage = require('../models/ChatRequestMessageModel');
 const Message = require('../models/messageModel');
+const catchAsync = require('../utils/catchAsync');
 const { successResponse } = require('../utils/apiResponder');
 const {
 	HTTP_OK,
@@ -114,20 +115,19 @@ exports.updateChat = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteChat = catchAsync(async (req, res, next) => {
-	let chat = await Chat.find({ uuid: req.params.uuid, user: req.user.id });
+	const chat = await Chat.find({ uuid: req.params.uuid, user: req.user.id });
 
 	if (isArrayEmpty(chat)) {
 		return next(new AppError('No chat found with that ID', HTTP_NOT_FOUND));
 	}
 
+	await ChatRequestMessage.deleteMany({ chat: chat._id });
 	await Message.deleteMany({ chat: chat._id });
-
-	chat = await Chat.deleteOne({ uuid: req.params.uuid, user: req.user.id });
+	await Chat.deleteOne({ uuid: req.params.uuid, user: req.user.id });
 
 	successResponse({
 		response: res,
 		message: 'Deleted chat successfully',
 		code: HTTP_NO_CONTENT,
-		data: chat,
 	});
 });

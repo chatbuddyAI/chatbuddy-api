@@ -182,6 +182,12 @@ const generateChatbotResponseFromOpenAi = async (
 	// Get the chatbot's response
 	const chatbotMessage = responseMessage.data.choices[0].message.content;
 
+	await ChatRequestMessage.create({
+		chat: chatId,
+		role: ChatCompletionResponseMessageRoleEnum.Assistant,
+		content: chatbotMessage,
+	});
+
 	// Create a new message document for the chatbot's response
 	let chatbotResponse = await Message.create({
 		chat: chatId,
@@ -244,5 +250,164 @@ exports.getAllChatMessages = catchAsync(async (req, res, next) => {
 		message: 'Retrived all messages in user chat successfully',
 		code: HTTP_OK,
 		data: messages,
+	});
+});
+
+const getLastPrompts = async (chatId) => {
+	const chatRequestMessages = await ChatRequestMessage.aggregate([
+		{
+			$match: {
+				chat: chatId,
+			},
+		},
+		{
+			$project: {
+				_id: 0,
+				role: 1,
+				content: 1,
+				name: 1,
+			},
+		},
+	]);
+
+	let prompts = '';
+	const deletePromises = [];
+	chatRequestMessages.forEach((chatRequestMessage) => {
+		prompts += `${chatRequestMessage}\n\n`;
+	});
+
+	let token = getTokens(prompts);
+
+	while (token >= CHAT_BUDDY_TOKEN_CAP) {
+		const removedMessage = chatRequestMessages.shift();
+		const deletePromise = ChatRequestMessage.deleteOne({
+			role: removedMessage.role,
+			content: removedMessage.content,
+			name: removedMessage.name,
+		});
+
+		deletePromises.push(deletePromise);
+		token = getTokens(prompts);
+	}
+
+	await Promise.all(deletePromises);
+
+	chatRequestMessages.forEach((chatRequestMessage) => {
+		prompts += `${chatRequestMessage}\n\n`;
+	});
+
+	return prompts;
+};
+
+exports.sendMessageOld = catchAsync(async (req, res, next) => {
+	// Get the message that the user sent
+	const userMessage = req.body.message;
+
+	//a moderation check of the message with OpenAi's moderation endpoint
+	const moderation = await openai.createModeration({
+		input: userMessage,
+	});
+
+	if (moderation.data.results[0].flagged) {
+		return next(
+			new AppError(
+				'Your message was flagged as inappropriate',
+				HTTP_NOT_ACCEPTABLE
+			)
+		);
+	}
+
+	let chat = new Chat();
+
+	if (req.params.chat) {
+		//*******************if is send in chat *********************/
+
+		// Find the chat using the uuid and user id provided in the request
+		chat = await Chat.findOne({
+			uuid: req.params.chat,
+			user: req.user.id,
+		});
+		// If no chat was found with the provided information
+		if (!chat) {
+			// Return an error indicating that no chat was found
+			return next(
+				new AppError(
+					'No chat found with that ID or the chat does not belong to the user',
+					HTTP_NOT_FOUND
+				)
+			);
+		}
+		//check if chat is a group
+		//if chat is a group, check if user sending message belongs in the group
+
+		//*******************if is send in chat *******************/
+	} else {
+		//*******************if is new chat *********************/
+		console.log('new chat');
+
+		chat = await Chat.create({
+			user: req.user.id,
+			title: truncateMessage(userMessage),
+		});
+
+		//*******************if is new chat *********************/
+	}
+
+	await ChatRequestMessage.create({
+		chat: chat._id,
+		role: ChatCompletionResponseMessageRoleEnum.User,
+		content: userMessage,
+	});
+
+	// Create a new message document for the user's message
+	await Message.create({
+		chat: chat._id,
+		sender: 'user',
+		message: userMessage,
+	});
+
+	// Determine the prompt for the OpenAI API call. If there is a last prompt,
+	// add the user message to it, otherwise use the user message as the prompt
+	// const prompt = chat.lastPrompt
+	// ? `${chat.lastPrompt}\n\n${userMessage}\n`
+	// : `${userMessage}\n`;
+	const prompt = getLastPrompts(chat._id);
+
+	// Call the OpenAI API to generate a response
+	const response = await openai.createCompletion({
+		prompt: prompt,
+		model: 'text-davinci-003',
+		temperature: 1,
+		max_tokens: 256,
+	});
+
+	console.log(response.data);
+	// Get the chatbot's response
+	const chatbotMessage = response.data.choices[0].text;
+
+	await ChatRequestMessage.create({
+		chat: chat._id,
+		role: ChatCompletionResponseMessageRoleEnum.Assistant,
+		content: chatbotMessage,
+	});
+
+	// Create a new message document for the chatbot's response
+	const chatbotResponse = await Message.create({
+		chat: chat._id,
+		sender: 'chatbot',
+		message: chatbotMessage,
+		isBotReply: true,
+	});
+
+	// // Update the chat document with the new last prompt
+	// chat.lastPrompt = `${prompt}${chatbotMessage}`;
+	// await chat.save({ validateBeforeSave: false });
+
+	// Return the chatbot response
+	successResponse({
+		response: res,
+		message: 'New message sent and new chat created successfully',
+		code: HTTP_OK,
+		data: chatbotResponse,
 	});
 });
