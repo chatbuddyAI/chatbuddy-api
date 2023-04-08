@@ -50,6 +50,23 @@ const truncateMessage = (msg) => {
 	return `${shortMessage.trim()}`;
 };
 
+const chatRequestMessageAggregate = async (chatId) =>
+	await ChatRequestMessage.aggregate([
+		{
+			$match: {
+				chat: chatId,
+			},
+		},
+		{
+			$project: {
+				_id: 0,
+				role: 1,
+				content: 1,
+				name: 1,
+			},
+		},
+	]);
+
 const deleteOldMessagesDueToTokenMaxedOut = async (prompts, tokenCount) => {
 	const deletePromises = [];
 
@@ -69,21 +86,7 @@ const deleteOldMessagesDueToTokenMaxedOut = async (prompts, tokenCount) => {
 };
 
 const getPrompts = async (chatId) => {
-	const prompts = await ChatRequestMessage.aggregate([
-		{
-			$match: {
-				chat: chatId,
-			},
-		},
-		{
-			$project: {
-				_id: 0,
-				role: 1,
-				content: 1,
-				name: 1,
-			},
-		},
-	]);
+	let prompts = await chatRequestMessageAggregate(chatId);
 
 	let tokenCount = 0;
 
@@ -92,7 +95,11 @@ const getPrompts = async (chatId) => {
 		tokenCount += tokens;
 	});
 
-	await deleteOldMessagesDueToTokenMaxedOut(prompts, tokenCount);
+	if (tokenCount >= CHAT_BUDDY_TOKEN_CAP) {
+		await deleteOldMessagesDueToTokenMaxedOut(prompts, tokenCount);
+
+		prompts = chatRequestMessageAggregate(chatId);
+	}
 
 	return prompts;
 };
@@ -252,6 +259,8 @@ exports.getAllChatMessages = catchAsync(async (req, res, next) => {
 		data: messages,
 	});
 });
+
+// Alternative functions
 
 const getLastPrompts = async (chatId) => {
 	const chatRequestMessages = await ChatRequestMessage.aggregate([
