@@ -40,7 +40,7 @@ const chatSchema = new mongoose.Schema(
 		lastPrompt: {
 			type: String,
 		},
-		total_tokens: {
+		totalTokens: {
 			type: Number,
 		},
 	},

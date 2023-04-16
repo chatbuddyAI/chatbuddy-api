@@ -148,6 +148,24 @@ class PaystackService {
 			throw error;
 		}
 	}
+
+	async listSubscriptionPlans() {
+		try {
+			const response = await axios.get(
+				`${process.env.PAYSTACK_BASE_URL}/plan`,
+				{
+					headers: {
+						Authorization: `Bearer ${this.secretKey}`,
+						'Content-Type': 'application/json',
+					},
+				}
+			);
+			return response.data;
+		} catch (error) {
+			console.error(error);
+			throw error;
+		}
+	}
 }
 
 module.exports = PaystackService;

@@ -1,3 +1,4 @@
+/* eslint-disable camelcase */
 const { body, validationResult } = require('express-validator');
 const PaystackService = require('../services/paystackService');
 const { successResponse } = require('../utils/apiResponder');
@@ -93,5 +94,22 @@ exports.updateSubscriptonCard = catchAsync(async (req, res, next) => {
 	successResponse({
 		response: res,
 		message: response.message,
+	});
+});
+
+exports.getPlans = catchAsync(async (req, res, next) => {
+	const response = await paystack.listSubscriptionPlans();
+
+	const { name, plan_code, interval, amount } = response.data;
+	console.log(response);
+	successResponse({
+		response: res,
+		message: response.message,
+		data: {
+			name,
+			planCodw: plan_code,
+			interval,
+			amount,
+		},
 	});
 });

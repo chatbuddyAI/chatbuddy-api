@@ -83,6 +83,9 @@ exports.webhook = catchAsync(async (req, res, next) => {
 					planCode: event.data.metadata.plan_code,
 					startDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
 				});
+
+				user.hasUsedFreeTrial = true;
+				await user.save({ validateBeforeSave: false });
 			}
 
 			await paystack.refundTransaction(event.data.reference);
@@ -96,10 +99,16 @@ exports.webhook = catchAsync(async (req, res, next) => {
 
 			await Subscription.create(subscriptionData);
 
+			user.isSubscribed = true;
+			await user.save({ validateBeforeSave: false });
+
 			break;
 
 		case 'subscription.disable':
 			await Subscription.updateOne({ user: user._id }, subscriptionData);
+
+			user.isSubscribed = false;
+			await user.save({ validateBeforeSave: false });
 
 			break;
 		case 'subscription.not_renew':

@@ -31,6 +31,10 @@ const userSchema = mongoose.Schema(
 		paystackCustomerCode: {
 			type: String,
 		},
+		isSubscribed: {
+			type: Boolean,
+			default: false,
+		},
 		hasUsedFreeTrial: {
 			type: Boolean,
 			default: false,

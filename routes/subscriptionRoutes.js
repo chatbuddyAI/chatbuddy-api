@@ -10,5 +10,6 @@ router.route('/subscribe').post(subscriptionController.addPaymentMethod);
 router.route('/cancel').post(subscriptionController.cancelSubscription);
 router.route('/enable').post(subscriptionController.enableSubscription);
 router.route('/update-card').post(subscriptionController.enableSubscription);
+router.route('/plans').get(subscriptionController.getPlans);
 
 module.exports = router;
