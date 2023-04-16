@@ -1,4 +1,5 @@
 const { promisify } = require('util');
+const { body, validationResult } = require('express-validator');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
@@ -61,23 +62,26 @@ exports.register = catchAsync(async (req, res, next) => {
 	createSendToken(newUser, 201, res);
 });
 
-exports.login = catchAsync(async (req, res, next) => {
-	const { email, password } = req.body;
+exports.login = [
+	body('email').isEmail().withMessage('Please provide a valid email address'),
+	body('password').notEmpty().withMessage('Please provide a password'),
+	catchAsync(async (req, res, next) => {
+		const errors = validationResult(req);
+		if (!errors.isEmpty()) {
+			return next(new AppError(errors.array()[0].msg, HTTP_BAD_REQUEST));
+		}
 
-	// Check if email and password exist
-	if (!email || !password) {
-		return next(
-			new AppError('Please provide email and password!', HTTP_BAD_REQUEST)
-		);
-	}
+		const { email, password } = req.body;
 
-	const user = await User.findOne({ email: email }).select('+password');
+		const user = await User.findOne({ email: email }).select('+password');
 
-	if (!user || !(await bcrypt.compare(password, user.password)))
-		return next(new AppError('Invalid login details', HTTP_UNAUTHORIZED));
+		if (!user || !(await bcrypt.compare(password, user.password))) {
+			return next(new AppError('Invalid login details', HTTP_UNAUTHORIZED));
+		}
 
-	createSendToken(user, 200, res);
-});
+		createSendToken(user, 200, res);
+	}),
+];
 
 exports.protect = catchAsync(async (req, res, next) => {
 	//get token and check if it exists

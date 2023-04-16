@@ -28,6 +28,13 @@ const userSchema = mongoose.Schema(
 			},
 			default: 'user',
 		},
+		paystackCustomerCode: {
+			type: String,
+		},
+		hasUsedFreeTrial: {
+			type: Boolean,
+			default: false,
+		},
 		password: {
 			type: String,
 			required: [true, 'Please provide a password'],

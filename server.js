@@ -12,6 +12,8 @@ dotenv.config({ path: './config.env' });
 
 const app = require('./app');
 
+mongoose.set('strictQuery', true);
+
 /** Connecting to Atlas DB
 
     const DB_CONNECTION_STRING = process.env.DATABASE.replace(
@@ -40,7 +42,7 @@ if (
 	);
 
 	mongoose.connect(DB_CONNECTION_STRING).then(() => {
-		console.log('DB Connection Successful');
+		console.log(`DB Connection Successful`);
 	});
 }
 

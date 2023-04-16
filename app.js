@@ -12,6 +12,8 @@ const globalErrorHandler = require('./exceptions/handler');
 const userRouter = require('./routes/userRoutes');
 const chatRouter = require('./routes/chatRoutes');
 const messageRouter = require('./routes/messageRoutes');
+const subscriptionRouter = require('./routes/subscriptionRoutes');
+const paystackWebhookRouter = require('./routes/paystackWebhookRoutes');
 
 const AppError = require('./utils/appError');
 
@@ -63,6 +65,8 @@ app.use('/api/v1/helloWorld', helloWorldRouter);
 app.use('/api/v1/chats', chatRouter);
 app.use('/api/v1/users', userRouter);
 app.use('/api/v1/messages', messageRouter);
+app.use('/api/v1/subscription', subscriptionRouter);
+app.use('/api/v1/paystack', paystackWebhookRouter);
 
 // Catching routes not found in the server
 app.all('*', (req, res, next) => {
