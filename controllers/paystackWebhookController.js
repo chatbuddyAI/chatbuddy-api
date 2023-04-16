@@ -59,6 +59,17 @@ exports.webhook = catchAsync(async (req, res, next) => {
 					event.data.metadata.transaction_type === 'addPaymentMethod'
 				)
 			) {
+				const card = Card.findOne({
+					user: user._id,
+					last4: event.data.authorization.last4,
+					expMonth: event.data.authorization.exp_month,
+					expYear: event.data.authorization.exp_year,
+					bin: event.data.authorization.bin,
+				});
+
+				if (!card) {
+					Card.updateOne({ user: user._id }, cardData);
+				}
 				break;
 			}
 
