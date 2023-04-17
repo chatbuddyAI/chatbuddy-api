@@ -108,7 +108,7 @@ exports.getPlans = catchAsync(async (req, res, next) => {
 			amount: plan.amount,
 		});
 	});
-	console.log(response);
+
 	successResponse({
 		response: res,
 		message: response.message,
