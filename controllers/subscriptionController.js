@@ -100,14 +100,14 @@ exports.updateSubscriptonCard = catchAsync(async (req, res, next) => {
 exports.getPlans = catchAsync(async (req, res, next) => {
 	const response = await paystack.listActiveSubscriptionPlans();
 
-	const { name, plan_code, interval, amount } = response.data;
+	const { name, plan_code, interval, amount } = response.data[0];
 	console.log(response);
 	successResponse({
 		response: res,
 		message: response.message,
 		data: {
 			name,
-			planCodw: plan_code,
+			planCode: plan_code,
 			interval,
 			amount,
 		},
