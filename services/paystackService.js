@@ -149,10 +149,10 @@ class PaystackService {
 		}
 	}
 
-	async listSubscriptionPlans() {
+	async listActiveSubscriptionPlans() {
 		try {
 			const response = await axios.get(
-				`${process.env.PAYSTACK_BASE_URL}/plan`,
+				`${process.env.PAYSTACK_BASE_URL}/plan?status=active`,
 				{
 					headers: {
 						Authorization: `Bearer ${this.secretKey}`,
