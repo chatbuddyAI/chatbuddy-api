@@ -6,6 +6,7 @@ const router = express.Router();
 
 router.use(authController.protect);
 
+router.route('/').get(subscriptionController.getSubscription);
 router.route('/subscribe').post(subscriptionController.addPaymentMethod);
 router.route('/cancel').post(subscriptionController.cancelSubscription);
 router.route('/enable').post(subscriptionController.enableSubscription);

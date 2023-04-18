@@ -115,3 +115,19 @@ exports.getPlans = catchAsync(async (req, res, next) => {
 		data: data,
 	});
 });
+
+exports.getSubscription = catchAsync(async (req, res, next) => {
+	const subscription = await Subscription.findOne({ user: req.user.id });
+
+	if (!subscription) {
+		return next(
+			new AppError('No Subscriptition found for this user', HTTP_NOT_FOUND)
+		);
+	}
+
+	successResponse({
+		response: res,
+		message: 'Retrieved chat successfully',
+		data: subscription,
+	});
+});
