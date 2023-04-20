@@ -16,6 +16,7 @@ exports.webhook = catchAsync(async (req, res, next) => {
 		.update(JSON.stringify(req.body))
 		.digest('hex');
 	if (hash !== req.headers['x-paystack-signature']) process.exit();
+	res.send(200);
 
 	// Retrieve the request's body
 	const event = req.body;
@@ -47,11 +48,12 @@ exports.webhook = catchAsync(async (req, res, next) => {
 	};
 
 	// Do something with the event
-	console.log(event);
+	// console.log(event);
 
 	switch (event.event) {
 		case 'charge.success':
 			// Save authorized card details to the database
+			console.log(`Charge Success Event for user:${user.email}`);
 
 			if (
 				!(
@@ -59,6 +61,8 @@ exports.webhook = catchAsync(async (req, res, next) => {
 					event.data.metadata.transaction_type === 'addPaymentMethod'
 				)
 			) {
+				console.log('Transaction type is not addPaymentMethod');
+
 				const card = Card.findOne({
 					user: user._id,
 					last4: event.data.authorization.last4,
@@ -68,15 +72,22 @@ exports.webhook = catchAsync(async (req, res, next) => {
 				});
 
 				if (!card) {
+					console.log(`Updating card details for user:${user.email}`);
+
 					Card.updateOne({ user: user._id }, cardData);
 				}
 				break;
 			}
+			console.log(`Saving card for user:${user.email}`);
 
 			// If card does not exist create the card
 			await Card.create(cardData);
 
 			if (!user.hasUsedFreeTrial) {
+				console.log(
+					`Subscribing and starting free trial for user:${user.email}`
+				);
+
 				await paystack.createSubscription({
 					customerEmail: event.data.customer.email,
 					authorizationCode: event.data.authorization.authorization_code,
@@ -87,11 +98,16 @@ exports.webhook = catchAsync(async (req, res, next) => {
 				user.hasUsedFreeTrial = true;
 				await user.save({ validateBeforeSave: false });
 			}
+			console.log(
+				`Refunding user:${user.email} the amount of ${event.data.amount / 100}`
+			);
 
 			await paystack.refundTransaction(event.data.reference);
 
 			break;
 		case 'subscription.create':
+			console.log(`Creating subscription for user:${user.email}`);
+
 			if (subscription) {
 				await Subscription.updateOne({ user: user._id }, subscriptionData);
 				break;
@@ -105,6 +121,8 @@ exports.webhook = catchAsync(async (req, res, next) => {
 			break;
 
 		case 'subscription.disable':
+			console.log(`Disabled subscription for user:${user.email}`);
+
 			await Subscription.updateOne({ user: user._id }, subscriptionData);
 
 			user.isSubscribed = false;
@@ -112,6 +130,8 @@ exports.webhook = catchAsync(async (req, res, next) => {
 
 			break;
 		case 'subscription.not_renew':
+			console.log(`Cancelled subscription for user:${user.email}`);
+
 			await Subscription.updateOne({ user: user._id }, subscriptionData);
 
 			break;
@@ -119,5 +139,4 @@ exports.webhook = catchAsync(async (req, res, next) => {
 		default:
 			break;
 	}
-	res.send(200);
 });
