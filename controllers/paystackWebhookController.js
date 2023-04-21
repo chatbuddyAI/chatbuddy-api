@@ -9,7 +9,7 @@ const Subscription = require('../models/subscriptionModel');
 const secret = process.env.PAYSTACK_SECRET_KEY;
 const paystack = new PaystackService();
 
-exports.webhook = catchAsync(async (req, res, next) => {
+exports.webhook = async (req, res, next) => {
 	//validate event
 	const hash = crypto
 		.createHmac('sha512', secret)
@@ -145,4 +145,4 @@ exports.webhook = catchAsync(async (req, res, next) => {
 		default:
 			break;
 	}
-});
+};
