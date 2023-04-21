@@ -16,7 +16,7 @@ exports.webhook = catchAsync(async (req, res, next) => {
 		.update(JSON.stringify(req.body))
 		.digest('hex');
 	if (hash !== req.headers['x-paystack-signature']) process.exit();
-	res.send(200);
+	res.sendStatus(200);
 
 	// Retrieve the request's body
 	const event = req.body;
