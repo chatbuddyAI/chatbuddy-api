@@ -24,37 +24,27 @@ exports.webhook = async (req, res, next) => {
 	try {
 		const user = await User.findOne({ email: event.data.customer.email });
 		const subscription = await Subscription.findOne({ user: user._id });
-		const cardData = {
-			user: user._id,
-			authorizationCode: event.data.authorization.authorization_code,
-			cardType: event.data.authorization.card_type,
-			last4: event.data.authorization.last4,
-			expMonth: event.data.authorization.exp_month,
-			expYear: event.data.authorization.exp_year,
-			bin: event.data.authorization.bin,
-			bank: event.data.authorization.bank,
-			signature: event.data.authorization.signature,
-			accountName: event.data.authorization.account_name,
-			reference: event.data.reference,
-		};
-		const subscriptionData = {
-			user: user._id,
-			planName: event.data.plan.name,
-			planCode: event.data.plan.plan_code,
-			subscriptionCode: event.data.subscription_code,
-			subscriptionAmount: event.data.plan.amount,
-			subscriptionInterval: event.data.plan.interval,
-			status: event.data.status,
-			nextPaymentDate: event.data.next_payment_date,
-			emailToken: event.data.email_token,
-		};
 		// Do something with the event
 		// console.log(event);
 
 		switch (event.event) {
 			case 'charge.success':
-				// Save authorized card details to the database
 				console.log(`${event.event} event for user:${user.email}`);
+
+				const cardData = {
+					user: user._id,
+					authorizationCode: event.data.authorization.authorization_code,
+					cardType: event.data.authorization.card_type,
+					last4: event.data.authorization.last4,
+					expMonth: event.data.authorization.exp_month,
+					expYear: event.data.authorization.exp_year,
+					bin: event.data.authorization.bin,
+					bank: event.data.authorization.bank,
+					signature: event.data.authorization.signature,
+					accountName: event.data.authorization.account_name,
+					reference: event.data.reference,
+				};
+				// Save authorized card details to the database
 
 				if (
 					!(
@@ -114,12 +104,35 @@ exports.webhook = async (req, res, next) => {
 
 				if (subscription) {
 					console.log(`Updating subscription for user:${user.email}`);
-					await Subscription.updateOne({ user: user._id }, subscriptionData);
+					await Subscription.updateOne(
+						{ user: user._id },
+						{
+							user: user._id,
+							planName: event.data.plan.name,
+							planCode: event.data.plan.plan_code,
+							subscriptionCode: event.data.subscription_code,
+							subscriptionAmount: event.data.plan.amount,
+							subscriptionInterval: event.data.plan.interval,
+							status: event.data.status,
+							nextPaymentDate: event.data.next_payment_date,
+							emailToken: event.data.email_token,
+						}
+					);
 					break;
 				}
 
 				console.log(`Creating subscription for user:${user.email}`);
-				await Subscription.create(subscriptionData);
+				await Subscription.create({
+					user: user._id,
+					planName: event.data.plan.name,
+					planCode: event.data.plan.plan_code,
+					subscriptionCode: event.data.subscription_code,
+					subscriptionAmount: event.data.plan.amount,
+					subscriptionInterval: event.data.plan.interval,
+					status: event.data.status,
+					nextPaymentDate: event.data.next_payment_date,
+					emailToken: event.data.email_token,
+				});
 
 				console.log(`Setting isSubscribed to true for user:${user.email}`);
 				user.isSubscribed = true;
@@ -131,7 +144,20 @@ exports.webhook = async (req, res, next) => {
 				console.log(`${event.event} event for user:${user.email}`);
 
 				console.log(`Updating subscription for user:${user.email}`);
-				await Subscription.updateOne({ user: user._id }, subscriptionData);
+				await Subscription.updateOne(
+					{ user: user._id },
+					{
+						user: user._id,
+						planName: event.data.plan.name,
+						planCode: event.data.plan.plan_code,
+						subscriptionCode: event.data.subscription_code,
+						subscriptionAmount: event.data.plan.amount,
+						subscriptionInterval: event.data.plan.interval,
+						status: event.data.status,
+						nextPaymentDate: event.data.next_payment_date,
+						emailToken: event.data.email_token,
+					}
+				);
 
 				console.log(`Setting isSubscribed to false for user:${user.email}`);
 				user.isSubscribed = false;
@@ -142,7 +168,20 @@ exports.webhook = async (req, res, next) => {
 				console.log(`${event.event} event for user:${user.email}`);
 
 				console.log(`Updating subscription for user:${user.email}`);
-				await Subscription.updateOne({ user: user._id }, subscriptionData);
+				await Subscription.updateOne(
+					{ user: user._id },
+					{
+						user: user._id,
+						planName: event.data.plan.name,
+						planCode: event.data.plan.plan_code,
+						subscriptionCode: event.data.subscription_code,
+						subscriptionAmount: event.data.plan.amount,
+						subscriptionInterval: event.data.plan.interval,
+						status: event.data.status,
+						nextPaymentDate: event.data.next_payment_date,
+						emailToken: event.data.email_token,
+					}
+				);
 
 				break;
 
