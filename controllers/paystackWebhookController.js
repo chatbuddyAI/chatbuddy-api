@@ -1,6 +1,6 @@
 /* eslint-disable no-case-declarations */
 const crypto = require('crypto');
-const catchAsync = require('../utils/catchAsync');
+// const catchAsync = require('../utils/catchAsync');
 const User = require('../models/userModel');
 const Card = require('../models/cardModel');
 const PaystackService = require('../services/paystackService');
@@ -19,130 +19,137 @@ exports.webhook = async (req, res, next) => {
 
 	// Retrieve the request's body
 	const event = req.body;
-	const user = await User.findOne({ email: event.data.customer.email });
-	const subscription = await Subscription.findOne({ user: user._id });
-	const cardData = {
-		user: user._id,
-		authorizationCode: event.data.authorization.authorization_code,
-		cardType: event.data.authorization.card_type,
-		last4: event.data.authorization.last4,
-		expMonth: event.data.authorization.exp_month,
-		expYear: event.data.authorization.exp_year,
-		bin: event.data.authorization.bin,
-		bank: event.data.authorization.bank,
-		signature: event.data.authorization.signature,
-		accountName: event.data.authorization.account_name,
-		reference: event.data.reference,
-	};
-	const subscriptionData = {
-		user: user._id,
-		planName: event.data.plan.name,
-		planCode: event.data.plan.plan_code,
-		subscriptionCode: event.data.subscription_code,
-		subscriptionAmount: event.data.plan.amount,
-		subscriptionInterval: event.data.plan.monthly,
-		status: event.data.status,
-		nextPaymentDate: event.data.next_payment_date,
-		emailToken: event.data.email_token,
-	};
 	res.sendStatus(200);
-	// Do something with the event
-	// console.log(event);
 
-	switch (event.event) {
-		case 'charge.success':
-			// Save authorized card details to the database
-			console.log(`${event.event} event for user:${user.email}`);
+	try {
+		const user = await User.findOne({ email: event.data.customer.email });
+		const subscription = await Subscription.findOne({ user: user._id });
+		const cardData = {
+			user: user._id,
+			authorizationCode: event.data.authorization.authorization_code,
+			cardType: event.data.authorization.card_type,
+			last4: event.data.authorization.last4,
+			expMonth: event.data.authorization.exp_month,
+			expYear: event.data.authorization.exp_year,
+			bin: event.data.authorization.bin,
+			bank: event.data.authorization.bank,
+			signature: event.data.authorization.signature,
+			accountName: event.data.authorization.account_name,
+			reference: event.data.reference,
+		};
+		const subscriptionData = {
+			user: user._id,
+			planName: event.data.plan.name,
+			planCode: event.data.plan.plan_code,
+			subscriptionCode: event.data.subscription_code,
+			subscriptionAmount: event.data.plan.amount,
+			subscriptionInterval: event.data.plan.interval,
+			status: event.data.status,
+			nextPaymentDate: event.data.next_payment_date,
+			emailToken: event.data.email_token,
+		};
+		// Do something with the event
+		// console.log(event);
 
-			if (
-				!(
-					event.data.metadata.transaction_type &&
-					event.data.metadata.transaction_type === 'addPaymentMethod'
-				)
-			) {
-				console.log('Transaction type is not addPaymentMethod');
+		switch (event.event) {
+			case 'charge.success':
+				// Save authorized card details to the database
+				console.log(`${event.event} event for user:${user.email}`);
 
-				const card = Card.findOne({
-					user: user._id,
-					last4: event.data.authorization.last4,
-					expMonth: event.data.authorization.exp_month,
-					expYear: event.data.authorization.exp_year,
-					bin: event.data.authorization.bin,
-				});
-				// if user uses new card for the subscription then update their card on our database to the new one
-				// this is so because paystack will be handling the updating card for subscription part - hope i understand this in the future {stressed emoji}
-				if (!card) {
-					console.log(`Updating card details for user:${user.email}`);
+				if (
+					!(
+						event.data.metadata.transaction_type &&
+						event.data.metadata.transaction_type === 'addPaymentMethod'
+					)
+				) {
+					console.log('Transaction type is not addPaymentMethod');
 
-					Card.updateOne({ user: user._id }, cardData);
+					const card = Card.findOne({
+						user: user._id,
+						last4: event.data.authorization.last4,
+						expMonth: event.data.authorization.exp_month,
+						expYear: event.data.authorization.exp_year,
+						bin: event.data.authorization.bin,
+					});
+					// if user uses new card for the subscription then update their card on our database to the new one
+					// this is so because paystack will be handling the updating card for subscription part - hope i understand this in the future {stressed emoji}
+					if (!card) {
+						console.log(`Updating card details for user:${user.email}`);
+
+						Card.updateOne({ user: user._id }, cardData);
+					}
+					break;
 				}
-				break;
-			}
-			console.log(`Saving card for user:${user.email}`);
+				console.log(`Saving card for user:${user.email}`);
 
-			// If card does not exist create the card
-			await Card.create(cardData);
+				// If card does not exist create the card
+				await Card.create(cardData);
 
-			if (!user.hasUsedFreeTrial) {
+				if (!user.hasUsedFreeTrial) {
+					console.log(
+						`Subscribing and starting free trial for user:${user.email}`
+					);
+
+					await paystack.createSubscription({
+						customerEmail: event.data.customer.email,
+						authorizationCode: event.data.authorization.authorization_code,
+						planCode: event.data.metadata.plan_code,
+						startDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+					});
+
+					user.hasUsedFreeTrial = true;
+					await user.save({ validateBeforeSave: false });
+				}
 				console.log(
-					`Subscribing and starting free trial for user:${user.email}`
+					`Refunding user:${user.email} the amount of ${
+						event.data.amount / 100
+					}`
 				);
 
-				await paystack.createSubscription({
-					customerEmail: event.data.customer.email,
-					authorizationCode: event.data.authorization.authorization_code,
-					planCode: event.data.metadata.plan_code,
-					startDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-				});
+				await paystack.refundTransaction(event.data.reference);
 
-				user.hasUsedFreeTrial = true;
+				break;
+			case 'subscription.create':
+				console.log(`${event.event} event for user:${user.email}`);
+
+				if (subscription) {
+					console.log(`Updating subscription for user:${user.email}`);
+					await Subscription.updateOne({ user: user._id }, subscriptionData);
+					break;
+				}
+
+				console.log(`Creating subscription for user:${user.email}`);
+				await Subscription.create(subscriptionData);
+
+				console.log(`Setting isSubscribed to true for user:${user.email}`);
+				user.isSubscribed = true;
 				await user.save({ validateBeforeSave: false });
-			}
-			console.log(
-				`Refunding user:${user.email} the amount of ${event.data.amount / 100}`
-			);
 
-			await paystack.refundTransaction(event.data.reference);
+				break;
 
-			break;
-		case 'subscription.create':
-			console.log(`${event.event} event for user:${user.email}`);
+			case 'subscription.disable':
+				console.log(`${event.event} event for user:${user.email}`);
 
-			if (subscription) {
 				console.log(`Updating subscription for user:${user.email}`);
 				await Subscription.updateOne({ user: user._id }, subscriptionData);
+
+				console.log(`Setting isSubscribed to false for user:${user.email}`);
+				user.isSubscribed = false;
+				await user.save({ validateBeforeSave: false });
+
 				break;
-			}
+			case 'subscription.not_renew':
+				console.log(`${event.event} event for user:${user.email}`);
 
-			console.log(`Creating subscription for user:${user.email}`);
-			await Subscription.create(subscriptionData);
+				console.log(`Updating subscription for user:${user.email}`);
+				await Subscription.updateOne({ user: user._id }, subscriptionData);
 
-			console.log(`Setting isSubscribed to true for user:${user.email}`);
-			user.isSubscribed = true;
-			await user.save({ validateBeforeSave: false });
+				break;
 
-			break;
-
-		case 'subscription.disable':
-			console.log(`${event.event} event for user:${user.email}`);
-
-			console.log(`Updating subscription for user:${user.email}`);
-			await Subscription.updateOne({ user: user._id }, subscriptionData);
-
-			console.log(`Setting isSubscribed to false for user:${user.email}`);
-			user.isSubscribed = false;
-			await user.save({ validateBeforeSave: false });
-
-			break;
-		case 'subscription.not_renew':
-			console.log(`${event.event} event for user:${user.email}`);
-
-			console.log(`Updating subscription for user:${user.email}`);
-			await Subscription.updateOne({ user: user._id }, subscriptionData);
-
-			break;
-
-		default:
-			break;
+			default:
+				break;
+		}
+	} catch (error) {
+		console.log(error);
 	}
 };
