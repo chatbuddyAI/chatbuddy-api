@@ -15,8 +15,7 @@ exports.webhook = catchAsync(async (req, res, next) => {
 		.createHmac('sha512', secret)
 		.update(JSON.stringify(req.body))
 		.digest('hex');
-	if (hash !== req.headers['x-paystack-signature']) process.exit();
-	res.sendStatus(200);
+	if (hash !== req.headers['x-paystack-signature']) return;
 
 	// Retrieve the request's body
 	const event = req.body;
@@ -46,14 +45,14 @@ exports.webhook = catchAsync(async (req, res, next) => {
 		nextPaymentDate: event.data.next_payment_date,
 		emailToken: event.data.email_token,
 	};
-
+	res.sendStatus(200);
 	// Do something with the event
 	// console.log(event);
 
 	switch (event.event) {
 		case 'charge.success':
 			// Save authorized card details to the database
-			console.log(`Charge Success Event for user:${user.email}`);
+			console.log(`${event.event} event for user:${user.email}`);
 
 			if (
 				!(
@@ -70,7 +69,8 @@ exports.webhook = catchAsync(async (req, res, next) => {
 					expYear: event.data.authorization.exp_year,
 					bin: event.data.authorization.bin,
 				});
-
+				// if user uses new card for the subscription then update their card on our database to the new one
+				// this is so because paystack will be handling the updating card for subscription part - hope i understand this in the future {stressed emoji}
 				if (!card) {
 					console.log(`Updating card details for user:${user.email}`);
 
@@ -106,32 +106,38 @@ exports.webhook = catchAsync(async (req, res, next) => {
 
 			break;
 		case 'subscription.create':
-			console.log(`Creating subscription for user:${user.email}`);
+			console.log(`${event.event} event for user:${user.email}`);
 
 			if (subscription) {
+				console.log(`Updating subscription for user:${user.email}`);
 				await Subscription.updateOne({ user: user._id }, subscriptionData);
 				break;
 			}
 
+			console.log(`Creating subscription for user:${user.email}`);
 			await Subscription.create(subscriptionData);
 
+			console.log(`Setting isSubscribed to true for user:${user.email}`);
 			user.isSubscribed = true;
 			await user.save({ validateBeforeSave: false });
 
 			break;
 
 		case 'subscription.disable':
-			console.log(`Disabled subscription for user:${user.email}`);
+			console.log(`${event.event} event for user:${user.email}`);
 
+			console.log(`Updating subscription for user:${user.email}`);
 			await Subscription.updateOne({ user: user._id }, subscriptionData);
 
+			console.log(`Setting isSubscribed to false for user:${user.email}`);
 			user.isSubscribed = false;
 			await user.save({ validateBeforeSave: false });
 
 			break;
 		case 'subscription.not_renew':
-			console.log(`Cancelled subscription for user:${user.email}`);
+			console.log(`${event.event} event for user:${user.email}`);
 
+			console.log(`Updating subscription for user:${user.email}`);
 			await Subscription.updateOne({ user: user._id }, subscriptionData);
 
 			break;
