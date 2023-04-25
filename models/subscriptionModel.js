@@ -32,8 +32,7 @@ const subscriptionSchema = new mongoose.Schema(
 			required: true,
 		},
 		nextPaymentDate: {
-			type: Date,
-			required: true,
+			type: String,
 		},
 		emailToken: {
 			type: String,
