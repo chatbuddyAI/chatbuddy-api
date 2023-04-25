@@ -10,7 +10,7 @@ router.route('/').get(subscriptionController.getSubscription);
 router.route('/subscribe').post(subscriptionController.addPaymentMethod);
 router.route('/cancel').post(subscriptionController.cancelSubscription);
 router.route('/enable').post(subscriptionController.enableSubscription);
-router.route('/update-card').post(subscriptionController.enableSubscription);
+router.route('/update-card').post(subscriptionController.updateSubscriptonCard);
 router.route('/plans').get(subscriptionController.getPlans);
 router.route('/card').get(subscriptionController.getSubscriptionCard);
 
