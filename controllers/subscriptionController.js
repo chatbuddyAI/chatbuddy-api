@@ -6,6 +6,7 @@ const catchAsync = require('../utils/catchAsync');
 const { HTTP_BAD_REQUEST, HTTP_NOT_FOUND } = require('../utils/responseStatus');
 const AppError = require('../utils/appError');
 const Subscription = require('../models/subscriptionModel');
+const Card = require('../models/cardModel');
 
 const paystack = new PaystackService();
 
@@ -129,5 +130,19 @@ exports.getSubscription = catchAsync(async (req, res, next) => {
 		response: res,
 		message: 'Retrieved chat successfully',
 		data: subscription,
+	});
+});
+
+exports.getSubscriptionCard = catchAsync(async (req, res, next) => {
+	const card = await Card.findOne({ user: req.user.id });
+
+	if (!card) {
+		return next(new AppError('No card found for this user', HTTP_NOT_FOUND));
+	}
+
+	successResponse({
+		response: res,
+		message: 'Retrieved chat successfully',
+		data: card,
 	});
 });
