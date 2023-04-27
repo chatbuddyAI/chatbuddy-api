@@ -150,6 +150,7 @@ exports.webhook = async (req, res, next) => {
 						user: user._id,
 						planName: event.data.plan.name,
 						planCode: event.data.plan.plan_code,
+						subscriptionId: event.data.id,
 						subscriptionCode: event.data.subscription_code,
 						subscriptionAmount: event.data.plan.amount,
 						subscriptionInterval: event.data.plan.interval,

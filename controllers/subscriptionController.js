@@ -65,9 +65,12 @@ exports.enableSubscription = catchAsync(async (req, res, next) => {
 			new AppError('No Subcription found for this user', HTTP_NOT_FOUND)
 		);
 	}
+	if (subscription.status === 'active') {
+		return next(new AppError('Subcription is still active', HTTP_BAD_REQUEST));
+	}
 
 	const response = await paystack.enableSubscription(
-		subscription.subscriptionCode,
+		subscription.subscriptionId,
 		subscription.emailToken
 	);
 
