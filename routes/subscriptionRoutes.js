@@ -13,5 +13,8 @@ router.route('/enable').post(subscriptionController.enableSubscription);
 router.route('/update-card').post(subscriptionController.updateSubscriptonCard);
 router.route('/plans').get(subscriptionController.getPlans);
 router.route('/card').get(subscriptionController.getSubscriptionCard);
+router
+	.route('/is-user-subscribed')
+	.post(subscriptionController.isUserSubscribed);
 
 module.exports = router;

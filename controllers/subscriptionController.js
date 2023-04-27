@@ -149,3 +149,11 @@ exports.getSubscriptionCard = catchAsync(async (req, res, next) => {
 		data: card,
 	});
 });
+
+exports.isUserSubscribed = catchAsync(async (req, res, next) => {
+	successResponse({
+		response: res,
+		message: 'Retrieved chat successfully',
+		data: req.user.isSubscribed,
+	});
+});
