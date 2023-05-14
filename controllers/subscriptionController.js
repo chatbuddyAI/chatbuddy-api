@@ -70,7 +70,7 @@ exports.enableSubscription = catchAsync(async (req, res, next) => {
 	}
 
 	const response = await paystack.enableSubscription(
-		subscription.subscriptionId,
+		subscription.subscriptionCode,
 		subscription.emailToken
 	);
 
