@@ -1,33 +1,85 @@
-﻿# Express structure for api development
+﻿# ChatBuddy
 
-This is the folder structure i have devised for my API development journey with NodeJS. It has a working error handling system out-of-the-box. I will accept pull request if you have more things to add. Lets make something awesome!!. Star this repo if you like it.
+ChatBuddy is a chat application that allows users to have conversational experiences with an AI chatbot. It is designed to make the interactions more engaging and personalized for the users. The chatbot utilizes the OpenAI GPT-3 language model to generate its responses. Users can start a new chat and send messages to the chatbot, which will respond in real-time based on the context of the conversation. The chat history is stored and can be reviewed by the user.
 
-## How to use
+## Getting Started
 
-Download the repo and exptract files to your project directory.
+To use the ChatBuddy API, follow these steps:
 
-Run >>npm update, on the project directory.
+- Clone this repository to your local machine.
+- Install the required dependencies by running npm install.
+- Before running the application, make sure to create a `config.env` file in the root directory by duplicating the `config.env.example` file and renaming it to `config.env`. Then, fill in the required values for the environment variables.
+  Here are the environment variables required for ChatBuddy API:
+
+  ```makefile
+      APP_NAME=ChatBuddy
+      NODE_ENV=development
+      PORT=7576
+
+      DATABASE=
+      DATABASE_LOCAL=mongodb://localhost:27017/chatbuddy
+      DATABASE_USERNAME=
+      DATABASE_PASSWORD=
+
+      JWT_SECRET=generate-your-long-secret-text-and-put-it-here-it-is-required
+      JWT_EXPIRES_IN =1d
+      JWT_COOKIE_EXPIRES_IN=1
+
+      MAIL_HOST=
+      MAIL_PORT=
+      MAIL_USERNAME=
+      MAIL_PASSWORD=
+      MAIL_FROM_ADDRESS=
+      MAIL_FROM_NAME="${APP_NAME}"
+
+      OPENAI_BASE_URL=https://api.openai.com
+      OPENAI_API_KEY=
+      OPENAI_ORG_ID=
+      OPENAI_GPT_MODEL=gpt-3.5-turbo
+      OPENAI_MODEL_TEMPERATURE=0.7
+
+      PAYSTACK_PUBLIC_KEY=
+      PAYSTACK_SECRET_KEY=
+      PAYSTACK_BASE_URL=https://api.paystack.co
+  ```
+
+- Start the server by running npm start.
+- The server should now be running on http://localhost:7576.
+
+## API Endpoints
+
+After running the project yon can find ChatBuddy API documentation here: [http://127.0.0.1:7576](http://127.0.0.1:7576).
+
+## Error Handling
+
+The ChatBuddy API handles errors by returning HTTP error codes and JSON error objects. All errors include a status code and a message field in the response body.
+
+##Contributing
+
+We welcome contributions from the community! To contribute to ChatBuddy, please follow these steps:
+
+Fork the repository.
+
+1. Create a new branch for your feature or bug fix:
 
 ```
-npm update
+git checkout -b my-new-feature
 ```
 
-Run >>cp config.env.example config.env, on the project directory.
+2. Make your changes and commit them:
 
 ```
-cp config.env.example config.env
+git commit -m "Add my new feature"
 ```
 
-Update your config.env file.
-
-Start the application. Run >>npm start, on the project directory.
+3. Push your changes to your fork:
 
 ```
-npm start
+git push origin my-new-feature
 ```
 
-TBrowse the following url on a browser or postman: [http://127.0.0.1:7575/api/v1/helloWorld](http://127.0.0.1:7575/api/v1/helloWorld).
+4. Create a pull request.
 
-## Connecting the Database
+## License
 
-In the ./server.js file, uncomment the DB connection method you would like to use. Remember to get your connection string from atlas cloud, if you are using ATas.
+This project is licensed under the MIT License. See the LICENSE file for details.
