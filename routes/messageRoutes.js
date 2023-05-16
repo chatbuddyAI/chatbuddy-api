@@ -6,7 +6,11 @@ const router = express.Router();
 
 router.use(authController.protect);
 
-router.post('/', messageController.sendMessage);
+router.post(
+	'/',
+	authController.checkIfUserIsSubscribed,
+	messageController.sendMessage
+);
 
 router
 	.route('/:chat')
