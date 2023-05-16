@@ -222,6 +222,9 @@ exports.sendMessage = catchAsync(async (req, res, next) => {
 		CHAT_BOT_KNOWLEDGE.concat(prompts),
 		chat._id
 	);
+
+	chat.updatedAt = Date.now();
+	await chat.save({ validateBeforeSave: false });
 	// Return the chatbot response
 	successResponse({
 		response: res,
@@ -308,115 +311,118 @@ const getLastPrompts = async (chatId) => {
 	return prompts;
 };
 
-exports.sendMessageOld = catchAsync(async (req, res, next) => {
-	// Get the message that the user sent
-	const userMessage = req.body.message;
+// exports.sendMessageOld = catchAsync(async (req, res, next) => {
+// 	// Get the message that the user sent
+// 	const userMessage = req.body.message;
 
-	//a moderation check of the message with OpenAi's moderation endpoint
-	const moderation = await openai.createModeration({
-		input: userMessage,
-	});
+// 	//a moderation check of the message with OpenAi's moderation endpoint
+// 	const moderation = await openai.createModeration({
+// 		input: userMessage,
+// 	});
 
-	if (moderation.data.results[0].flagged) {
-		return next(
-			new AppError(
-				'Your message was flagged as inappropriate',
-				HTTP_NOT_ACCEPTABLE
-			)
-		);
-	}
+// 	if (moderation.data.results[0].flagged) {
+// 		return next(
+// 			new AppError(
+// 				'Your message was flagged as inappropriate',
+// 				HTTP_NOT_ACCEPTABLE
+// 			)
+// 		);
+// 	}
 
-	let chat = new Chat();
+// 	let chat = new Chat();
 
-	if (req.params.chat) {
-		//*******************if is send in chat *********************/
+// 	if (req.params.chat) {
+// 		//*******************if is send in chat *********************/
 
-		// Find the chat using the uuid and user id provided in the request
-		chat = await Chat.findOne({
-			uuid: req.params.chat,
-			user: req.user.id,
-		});
-		// If no chat was found with the provided information
-		if (!chat) {
-			// Return an error indicating that no chat was found
-			return next(
-				new AppError(
-					'No chat found with that ID or the chat does not belong to the user',
-					HTTP_NOT_FOUND
-				)
-			);
-		}
-		//check if chat is a group
-		//if chat is a group, check if user sending message belongs in the group
+// 		// Find the chat using the uuid and user id provided in the request
+// 		chat = await Chat.findOne({
+// 			uuid: req.params.chat,
+// 			user: req.user.id,
+// 		});
+// 		// If no chat was found with the provided information
+// 		if (!chat) {
+// 			// Return an error indicating that no chat was found
+// 			return next(
+// 				new AppError(
+// 					'No chat found with that ID or the chat does not belong to the user',
+// 					HTTP_NOT_FOUND
+// 				)
+// 			);
+// 		}
+// 		//check if chat is a group
+// 		//if chat is a group, check if user sending message belongs in the group
 
-		//*******************if is send in chat *******************/
-	} else {
-		//*******************if is new chat *********************/
-		console.log('new chat');
+// 		//*******************if is send in chat *******************/
+// 	} else {
+// 		//*******************if is new chat *********************/
+// 		console.log('new chat');
 
-		chat = await Chat.create({
-			user: req.user.id,
-			title: truncateMessage(userMessage),
-		});
+// 		chat = await Chat.create({
+// 			user: req.user.id,
+// 			title: truncateMessage(userMessage),
+// 		});
 
-		//*******************if is new chat *********************/
-	}
+// 		//*******************if is new chat *********************/
+// 	}
 
-	await ChatRequestMessage.create({
-		chat: chat._id,
-		role: ChatCompletionResponseMessageRoleEnum.User,
-		content: userMessage,
-	});
+// 	await ChatRequestMessage.create({
+// 		chat: chat._id,
+// 		role: ChatCompletionResponseMessageRoleEnum.User,
+// 		content: userMessage,
+// 	});
 
-	// Create a new message document for the user's message
-	await Message.create({
-		chat: chat._id,
-		sender: 'user',
-		message: userMessage,
-	});
+// 	// Create a new message document for the user's message
+// 	await Message.create({
+// 		chat: chat._id,
+// 		sender: 'user',
+// 		message: userMessage,
+// 	});
 
-	// Determine the prompt for the OpenAI API call. If there is a last prompt,
-	// add the user message to it, otherwise use the user message as the prompt
-	// const prompt = chat.lastPrompt
-	// ? `${chat.lastPrompt}\n\n${userMessage}\n`
-	// : `${userMessage}\n`;
-	const prompt = getLastPrompts(chat._id);
+// 	// Determine the prompt for the OpenAI API call. If there is a last prompt,
+// 	// add the user message to it, otherwise use the user message as the prompt
+// 	// const prompt = chat.lastPrompt
+// 	// ? `${chat.lastPrompt}\n\n${userMessage}\n`
+// 	// : `${userMessage}\n`;
+// 	const prompt = getLastPrompts(chat._id);
 
-	// Call the OpenAI API to generate a response
-	const response = await openai.createCompletion({
-		prompt: prompt,
-		model: 'text-davinci-003',
-		temperature: 1,
-		max_tokens: 256,
-	});
+// 	// Call the OpenAI API to generate a response
+// 	const response = await openai.createCompletion({
+// 		prompt: prompt,
+// 		model: 'text-davinci-003',
+// 		temperature: 1,
+// 		max_tokens: 256,
+// 	});
 
-	console.log(response.data);
-	// Get the chatbot's response
-	const chatbotMessage = response.data.choices[0].text;
+// 	console.log(response.data);
+// 	// Get the chatbot's response
+// 	const chatbotMessage = response.data.choices[0].text;
 
-	await ChatRequestMessage.create({
-		chat: chat._id,
-		role: ChatCompletionResponseMessageRoleEnum.Assistant,
-		content: chatbotMessage,
-	});
+// 	await ChatRequestMessage.create({
+// 		chat: chat._id,
+// 		role: ChatCompletionResponseMessageRoleEnum.Assistant,
+// 		content: chatbotMessage,
+// 	});
 
-	// Create a new message document for the chatbot's response
-	const chatbotResponse = await Message.create({
-		chat: chat._id,
-		sender: 'chatbot',
-		message: chatbotMessage,
-		isBotReply: true,
-	});
+// 	// Create a new message document for the chatbot's response
+// 	const chatbotResponse = await Message.create({
+// 		chat: chat._id,
+// 		sender: 'chatbot',
+// 		message: chatbotMessage,
+// 		isBotReply: true,
+// 	});
 
-	// // Update the chat document with the new last prompt
-	// chat.lastPrompt = `${prompt}${chatbotMessage}`;
-	// await chat.save({ validateBeforeSave: false });
+// 	chat.updatedAt = Date.now();
+// 	await chat.save({ validateBeforeSave: false });
 
-	// Return the chatbot response
-	successResponse({
-		response: res,
-		message: 'New message sent and new chat created successfully',
-		code: HTTP_OK,
-		data: chatbotResponse,
-	});
-});
+// 	// // Update the chat document with the new last prompt
+// 	// chat.lastPrompt = `${prompt}${chatbotMessage}`;
+// 	// await chat.save({ validateBeforeSave: false });
+
+// 	// Return the chatbot response
+// 	successResponse({
+// 		response: res,
+// 		message: 'New message sent and new chat created successfully',
+// 		code: HTTP_OK,
+// 		data: chatbotResponse,
+// 	});
+// });
