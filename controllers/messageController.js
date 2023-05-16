@@ -265,51 +265,51 @@ exports.getAllChatMessages = catchAsync(async (req, res, next) => {
 
 // Alternative functions
 
-const getLastPrompts = async (chatId) => {
-	const chatRequestMessages = await ChatRequestMessage.aggregate([
-		{
-			$match: {
-				chat: chatId,
-			},
-		},
-		{
-			$project: {
-				_id: 0,
-				role: 1,
-				content: 1,
-				name: 1,
-			},
-		},
-	]);
+// const getLastPrompts = async (chatId) => {
+// 	const chatRequestMessages = await ChatRequestMessage.aggregate([
+// 		{
+// 			$match: {
+// 				chat: chatId,
+// 			},
+// 		},
+// 		{
+// 			$project: {
+// 				_id: 0,
+// 				role: 1,
+// 				content: 1,
+// 				name: 1,
+// 			},
+// 		},
+// 	]);
 
-	let prompts = '';
-	const deletePromises = [];
-	chatRequestMessages.forEach((chatRequestMessage) => {
-		prompts += `${chatRequestMessage}\n\n`;
-	});
+// 	let prompts = '';
+// 	const deletePromises = [];
+// 	chatRequestMessages.forEach((chatRequestMessage) => {
+// 		prompts += `${chatRequestMessage}\n\n`;
+// 	});
 
-	let token = getTokens(prompts);
+// 	let token = getTokens(prompts);
 
-	while (token >= CHAT_BUDDY_TOKEN_CAP) {
-		const removedMessage = chatRequestMessages.shift();
-		const deletePromise = ChatRequestMessage.deleteOne({
-			role: removedMessage.role,
-			content: removedMessage.content,
-			name: removedMessage.name,
-		});
+// 	while (token >= CHAT_BUDDY_TOKEN_CAP) {
+// 		const removedMessage = chatRequestMessages.shift();
+// 		const deletePromise = ChatRequestMessage.deleteOne({
+// 			role: removedMessage.role,
+// 			content: removedMessage.content,
+// 			name: removedMessage.name,
+// 		});
 
-		deletePromises.push(deletePromise);
-		token = getTokens(prompts);
-	}
+// 		deletePromises.push(deletePromise);
+// 		token = getTokens(prompts);
+// 	}
 
-	await Promise.all(deletePromises);
+// 	await Promise.all(deletePromises);
 
-	chatRequestMessages.forEach((chatRequestMessage) => {
-		prompts += `${chatRequestMessage}\n\n`;
-	});
+// 	chatRequestMessages.forEach((chatRequestMessage) => {
+// 		prompts += `${chatRequestMessage}\n\n`;
+// 	});
 
-	return prompts;
-};
+// 	return prompts;
+// };
 
 // exports.sendMessageOld = catchAsync(async (req, res, next) => {
 // 	// Get the message that the user sent
