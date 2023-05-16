@@ -408,6 +408,9 @@ exports.sendMessageOld = catchAsync(async (req, res, next) => {
 		isBotReply: true,
 	});
 
+	chat.updatedAt = Date.now();
+	await chat.save({ validateBeforeSave: false });
+
 	// // Update the chat document with the new last prompt
 	// chat.lastPrompt = `${prompt}${chatbotMessage}`;
 	// await chat.save({ validateBeforeSave: false });
