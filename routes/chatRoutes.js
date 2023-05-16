@@ -9,7 +9,11 @@ router.use(authController.protect);
 router
 	.route('/')
 	.get(chatController.getAllChats)
-	.post(authController.restrictedTo('user'), chatController.createChat);
+	.post(
+		authController.restrictedTo('user'),
+		authController.checkIfUserIsSubscribed,
+		chatController.createChat
+	);
 
 router
 	.route('/:uuid')

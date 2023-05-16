@@ -130,6 +130,26 @@ exports.protect = catchAsync(async (req, res, next) => {
 	next();
 });
 
+exports.checkIfUserIsSubscribed = catchAsync(async (req, res, next) => {
+	if (!req.user.isSubscribed) {
+		if (!req.user.hasUsedFreeTrial)
+			return next(
+				new AppError(
+					'Subscribe now and get one month free trial',
+					HTTP_UNAUTHORIZED
+				)
+			);
+
+		return next(
+			new AppError(
+				'Subscribe to continue enjoying conversations with your chatbuddy',
+				HTTP_UNAUTHORIZED
+			)
+		);
+	}
+	next();
+});
+
 exports.restrictedTo =
 	(...roles) =>
 	(req, res, next) => {

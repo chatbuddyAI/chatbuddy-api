@@ -11,6 +11,6 @@ router.post('/', messageController.sendMessage);
 router
 	.route('/:chat')
 	.get(messageController.getAllChatMessages)
-	.post(messageController.sendMessage);
+	.post(authController.checkIfUserIsSubscribed, messageController.sendMessage);
 
 module.exports = router;
