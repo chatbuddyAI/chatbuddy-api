@@ -100,87 +100,6 @@ exports.login = [
 	}),
 ];
 
-exports.protect = catchAsync(async (req, res, next) => {
-	//get token and check if it exists
-	let token;
-	if (
-		req.headers.authorization &&
-		req.headers.authorization.startsWith('Bearer')
-	) {
-		token = req.headers.authorization.split(' ')[1];
-		// console.log(token);
-	}
-
-	if (!token) {
-		return next(
-			new AppError(
-				'You are not logged in! Please login to get access',
-				HTTP_UNAUTHORIZED
-			)
-		);
-	}
-	// verify the token
-	const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
-	//check if user exists
-	const user = await User.findById(decoded.id);
-	if (!user) {
-		return next(
-			new AppError(
-				'The user belonging to this token does not exist anymore.',
-				HTTP_UNAUTHORIZED
-			)
-		);
-	}
-
-	// check if user changed password aftr token was issued
-	if (user.changedPasswordAfter(decoded.iat)) {
-		return next(
-			new AppError(
-				'User recently changed password! Please login again.',
-				HTTP_UNAUTHORIZED
-			)
-		);
-	}
-
-	// Grant access to protected route
-	req.user = user;
-	next();
-});
-
-exports.checkIfUserIsSubscribed = catchAsync(async (req, res, next) => {
-	if (!req.user.isSubscribed) {
-		if (!req.user.hasUsedFreeTrial)
-			return next(
-				new AppError(
-					'Subscribe now and get one month free trial',
-					HTTP_UNAUTHORIZED
-				)
-			);
-
-		return next(
-			new AppError(
-				'Subscribe to continue enjoying conversations with your chatbuddy',
-				HTTP_UNAUTHORIZED
-			)
-		);
-	}
-	next();
-});
-
-exports.restrictedTo =
-	(...roles) =>
-	(req, res, next) => {
-		if (!roles.includes(req.user.role)) {
-			return next(
-				new AppError(
-					'You do not have permission to perform this action.',
-					HTTP_FORBIDDEN
-				)
-			);
-		}
-		next();
-	};
-
 // exports.forgotPassword = catchAsync(async (req, res, next) => {
 // 	const { email } = req.body;
 // 	// get user from email
@@ -429,3 +348,86 @@ exports.resetPassword = [
 		// respond invalid token
 	}),
 ];
+
+/** MIDDLEWARES */
+
+exports.protect = catchAsync(async (req, res, next) => {
+	//get token and check if it exists
+	let token;
+	if (
+		req.headers.authorization &&
+		req.headers.authorization.startsWith('Bearer')
+	) {
+		token = req.headers.authorization.split(' ')[1];
+		// console.log(token);
+	}
+
+	if (!token) {
+		return next(
+			new AppError(
+				'You are not logged in! Please login to get access',
+				HTTP_UNAUTHORIZED
+			)
+		);
+	}
+	// verify the token
+	const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+	//check if user exists
+	const user = await User.findById(decoded.id);
+	if (!user) {
+		return next(
+			new AppError(
+				'The user belonging to this token does not exist anymore.',
+				HTTP_UNAUTHORIZED
+			)
+		);
+	}
+
+	// check if user changed password aftr token was issued
+	if (user.changedPasswordAfter(decoded.iat)) {
+		return next(
+			new AppError(
+				'User recently changed password! Please login again.',
+				HTTP_UNAUTHORIZED
+			)
+		);
+	}
+
+	// Grant access to protected route
+	req.user = user;
+	next();
+});
+
+exports.checkIfUserIsSubscribed = catchAsync(async (req, res, next) => {
+	if (!req.user.isSubscribed) {
+		if (!req.user.hasUsedFreeTrial)
+			return next(
+				new AppError(
+					'Subscribe now and get one month free trial',
+					HTTP_UNAUTHORIZED
+				)
+			);
+
+		return next(
+			new AppError(
+				'Subscribe to continue enjoying conversations with your chatbuddy',
+				HTTP_UNAUTHORIZED
+			)
+		);
+	}
+	next();
+});
+
+exports.restrictedTo =
+	(...roles) =>
+	(req, res, next) => {
+		if (!roles.includes(req.user.role)) {
+			return next(
+				new AppError(
+					'You do not have permission to perform this action.',
+					HTTP_FORBIDDEN
+				)
+			);
+		}
+		next();
+	};
