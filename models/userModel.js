@@ -8,7 +8,7 @@ const userSchema = mongoose.Schema(
 	{
 		name: {
 			type: String,
-			required: [true, 'Please provide your full name'],
+			// required: [true, 'Please provide your full name'],
 			lowercase: true,
 			trim: true,
 		},
@@ -56,7 +56,10 @@ const userSchema = mongoose.Schema(
 				message: 'The passwords do not match!!',
 			},
 		},
-		emailVerifiedAt: Date,
+		emailVerifiedAt: {
+			type: Date,
+			default: null,
+		},
 		passwordChangedAt: Date,
 		passwordResetToken: String,
 		passwordResetExpires: Date,
@@ -114,6 +117,10 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
 // An instance method that can be called on other files
 userSchema.methods.hasVerifiedEmail = function () {
 	return !!this.emailVerifiedAt;
+};
+
+userSchema.methods.markEmailAsVerified = function () {
+	this.emailVerifiedAt = Date.now();
 };
 
 // An instance method that can be called on other files

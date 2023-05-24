@@ -6,7 +6,7 @@ module.exports = class Email {
 	constructor({ user, options = {} }) {
 		this.to = user.email;
 		this.options = options;
-		this.firstName = user.name.split(' ')[0];
+		this.firstName = user.name == null ? '' : user.name.split(' ')[0];
 		this.from = `${process.env.MAIL_FROM_NAME} <${process.env.MAIL_FROM_ADDRESS}>`;
 	}
 
@@ -51,5 +51,25 @@ module.exports = class Email {
 
 	async sendWelcome() {
 		await this.send('welcome', 'Welcome to ChatBuddy');
+	}
+
+	async sendVerificationOtp() {
+		await this.send('otp', 'Verify Your Email');
+	}
+
+	async sendEmailVerificationSuccessful() {
+		await this.send('emailVerified', 'Email Verified!');
+	}
+
+	async sendResetPassword() {
+		await this.send('resetPassword', 'Reset Password');
+	}
+
+	async sendResetPasswordOtp() {
+		await this.send('resetPasswordOtp', 'Reset Password');
+	}
+
+	async sendResetPasswordComplete() {
+		await this.send('resetPasswordComplete', 'Password Reset Complete');
 	}
 };

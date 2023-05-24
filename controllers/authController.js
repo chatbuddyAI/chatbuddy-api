@@ -1,12 +1,12 @@
 const { promisify } = require('util');
 const { body, validationResult } = require('express-validator');
-const crypto = require('crypto');
+// const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const User = require('../models/userModel');
 const AppError = require('../utils/appError');
+const Email = require('../utils/email');
 const catchAsync = require('../utils/catchAsync');
-const sendEmail = require('../utils/email');
 const { successResponse } = require('../utils/apiResponder');
 const {
 	HTTP_OK,
@@ -16,7 +16,8 @@ const {
 	HTTP_NOT_FOUND,
 	HTTP_INTERNAL_SERVER_ERROR,
 } = require('../utils/responseStatus');
-const Email = require('../utils/email');
+const Otp = require('../models/otpModel');
+const { OtpTypes } = require('../utils/enums');
 
 const createSingedToken = (id) =>
 	jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -40,7 +41,7 @@ const createSendToken = catchAsync(async (user, statusCode, res) => {
 	// Remove password from output
 	user.password = undefined;
 
-	successResponse({
+	return successResponse({
 		response: res,
 		message: 'User authenticated successfully',
 		code: HTTP_OK,
@@ -52,6 +53,15 @@ const createSendToken = catchAsync(async (user, statusCode, res) => {
 	});
 });
 
+function generateOtp() {
+	// Implement your OTP generation logic here
+	// This can be a simple random number or a more complex algorithm
+	// Example:
+	const min = 1000;
+	const max = 9999;
+	return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
 exports.register = catchAsync(async (req, res, next) => {
 	const newUser = await User.create({
 		name: req.body.name,
@@ -60,8 +70,7 @@ exports.register = catchAsync(async (req, res, next) => {
 		passwordConfirm: req.body.passwordConfirm,
 	});
 
-	await new Email({
-		user: newUser,
+	await new Email(newUser, {
 		options: {
 			fullname: newUser.name,
 		},
@@ -172,99 +181,96 @@ exports.restrictedTo =
 		next();
 	};
 
-exports.forgotPassword = catchAsync(async (req, res, next) => {
-	const { email } = req.body;
-	// get user from email
-	const user = await User.findOne({ email });
+// exports.forgotPassword = catchAsync(async (req, res, next) => {
+// 	const { email } = req.body;
+// 	// get user from email
+// 	const user = await User.findOne({ email });
 
-	if (!user) {
-		return next(
-			new AppError('There is no user with this email address', HTTP_NOT_FOUND)
-		);
-	}
-	// gemerate a token
-	const resetToken = user.createPasswordResetToken();
-	await user.save({ validateBeforeSave: false });
+// 	if (!user) {
+// 		return next(
+// 			new AppError('There is no user with this email address', HTTP_NOT_FOUND)
+// 		);
+// 	}
+// 	// gemerate a token
+// 	const resetToken = user.createPasswordResetToken();
+// 	await user.save({ validateBeforeSave: false });
 
-	// send to user email
-	const resetUrl = `${req.protocol}://${req.get(
-		'host'
-	)}/api/v1/users/resetPassword/${resetToken}`;
+// 	// send to user email
+// 	const resetUrl = `${req.protocol}://${req.get(
+// 		'host'
+// 	)}/api/v1/users/resetPassword/${resetToken}`;
 
-	const message = `Forgot your password? Submit a PATCH request with your new password and 
-	passwordConfirm to: ${resetUrl}.\nIf you didn't forget your password, kindly ignore this email.`;
-	try {
-		await sendEmail({
-			email: user.email,
-			subject: 'Your password reset token (Valid for 10 minutes)',
-			message,
-		});
+// 	try {
+// 		await new Email({
+// 			user: user,
+// 			options: { resetUrl },
+// 		}).sendResetPassword();
 
-		successResponse({
-			response: res,
-			message: 'Password reset token sent to email',
-			code: HTTP_OK,
-		});
-	} catch (err) {
-		user.decomissionPasswordResetToken();
-		await user.save({ validateBeforeSave: false });
+// 		return successResponse({
+// 			response: res,
+// 			message: 'Password reset token sent to email',
+// 			code: HTTP_OK,
+// 		});
+// 	} catch (err) {
+// 		user.decomissionPasswordResetToken();
+// 		await user.save({ validateBeforeSave: false });
 
-		return next(
-			new AppError(
-				'There was an error sending the email, try again later!',
-				HTTP_INTERNAL_SERVER_ERROR
-			)
-		);
-	}
-});
+// 		return next(
+// 			new AppError(
+// 				'There was an error sending the email, try again later!',
+// 				HTTP_INTERNAL_SERVER_ERROR
+// 			)
+// 		);
+// 	}
+// });
 
-exports.resetPassword = catchAsync(async (req, res, next) => {
-	// hash the token to to compare it with the one stored in the db
-	const hashedToken = crypto
-		.createHash('sha256')
-		.update(req.params.token)
-		.digest('hex');
+// exports.resetPassword = catchAsync(async (req, res, next) => {
+// 	// hash the token to to compare it with the one stored in the db
+// 	const hashedToken = crypto
+// 		.createHash('sha256')
+// 		.update(req.params.token)
+// 		.digest('hex');
 
-	// Get user based on token and if token is not expired
-	const user = await User.findOne({
-		passwordResetToken: hashedToken,
-		passwordResetExpires: { $gt: Date.now() },
-	});
+// 	// Get user based on token and if token is not expired
+// 	const user = await User.findOne({
+// 		passwordResetToken: hashedToken,
+// 		passwordResetExpires: { $gt: Date.now() },
+// 	});
 
-	// if user is not found fail with invalid token
-	if (!user) {
-		return next(new AppError('Invalid or Expired Token', HTTP_FORBIDDEN));
-	}
+// 	// if user is not found fail with invalid token
+// 	if (!user) {
+// 		return next(new AppError('Invalid or Expired Token', HTTP_FORBIDDEN));
+// 	}
 
-	// update password
-	user.password = req.body.password;
-	user.passwordConfirm = req.body.passwordConfirm;
+// 	// update password
+// 	user.password = req.body.password;
+// 	user.passwordConfirm = req.body.passwordConfirm;
 
-	// remove password reset token and expires field from the db
-	// set them to undefined
-	user.decomissionPasswordResetToken(); // a userModel instance method
+// 	// remove password reset token and expires field from the db
+// 	// set them to undefined
+// 	user.decomissionPasswordResetToken(); // a userModel instance method
 
-	//save the modifications
-	await user.save();
+// 	//save the modifications
+// 	await user.save();
 
-	// Log user in
-	const token = createSingedToken(user._id);
+// 	// Log user in
+// 	const token = createSingedToken(user._id);
 
-	const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+// 	const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
-	// send success response
-	successResponse({
-		response: res,
-		message: 'Your password has been reset',
-		code: HTTP_OK,
-		data: {
-			user,
-			token,
-			expiresIn: decoded.exp,
-		},
-	});
-	// respond invalid token
-});
+// 	// send success response
+// 	return successResponse({
+// 		response: res,
+// 		message: 'Your password has been reset',
+// 		code: HTTP_OK,
+// 		data: {
+// 			user,
+// 			token,
+// 			expiresIn: decoded.exp,
+// 		},
+// 	});
+// 	// respond invalid token
+// });
 
 exports.updatePassword = catchAsync(async (req, res, next) => {
 	// get user
@@ -285,7 +291,7 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
 	const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
 
 	// send success response
-	successResponse({
+	return successResponse({
 		response: res,
 		message: 'Your password has been changed',
 		code: HTTP_OK,
@@ -296,3 +302,130 @@ exports.updatePassword = catchAsync(async (req, res, next) => {
 		},
 	});
 });
+
+exports.forgotPassword = [
+	body('email').isEmail().withMessage('OTP is a required string'),
+	catchAsync(async (req, res, next) => {
+		const { email } = req.body;
+		// get user from email
+		const user = await User.findOne({ email });
+
+		if (!user) {
+			return next(
+				new AppError('There is no user with this email address', HTTP_NOT_FOUND)
+			);
+		}
+
+		const otpRecord = await Otp.findOne({
+			email,
+			type: OtpTypes.PASSWORD_RESET,
+		});
+
+		if (otpRecord) {
+			//// check if it has been a minute since the last request
+
+			if (!otpRecord.hasPassedOneMinute()) {
+				//// if it hasn't, tell them to wait befor retrying
+				return next(
+					new AppError('Please wait before retrying.', HTTP_BAD_REQUEST)
+				);
+			}
+			//// if it has, delete the current otp
+			await otpRecord.deleteOne();
+		}
+
+		// generate otp
+		const otp = generateOtp();
+
+		// send otp to user email
+
+		await new Email({
+			user: user,
+			options: { otp },
+		}).sendResetPasswordOtp();
+
+		// store otp in otp db table
+		await Otp.create({
+			email,
+			otp,
+			type: OtpTypes.PASSWORD_RESET,
+		});
+
+		// return success
+		return successResponse({
+			response: res,
+			message: 'Password reset OTP sent to your email',
+			data: email,
+		});
+	}),
+];
+
+exports.resetPassword = [
+	body('otp').exists().withMessage('OTP is a required string'),
+	body('email').isEmail().withMessage('Enter a valid email'),
+	body('password').notEmpty().withMessage('Password is required'),
+	body('passwordConfirm')
+		.notEmpty()
+		.withMessage('Password Confirm is required'),
+	catchAsync(async (req, res, next) => {
+		const errors = validationResult(req);
+		if (!errors.isEmpty()) {
+			return next(new AppError(errors.array()[0].msg, HTTP_BAD_REQUEST));
+		}
+
+		const { email, otp, password, passwordConfirm } = req.body;
+
+		let user = await User.findOne({ email });
+
+		if (!user) {
+			return next(
+				new AppError('There is no user with this email address', HTTP_NOT_FOUND)
+			);
+		}
+
+		const otpRecord = await Otp.findOne({
+			email,
+			type: OtpTypes.PASSWORD_RESET,
+		});
+
+		// verify otp, this will also fail if no otp is found
+		if (!otpRecord || !(await otpRecord.isValid(otp))) {
+			return next(
+				new AppError(
+					'The OTP is either incorrect or expired, try again!',
+					HTTP_BAD_REQUEST
+				)
+			);
+		}
+
+		// update password
+		user.password = password;
+		user.passwordConfirm = passwordConfirm;
+
+		//save the modifications
+		await user.save();
+		user = await User.findOne({ email }).select('-password');
+
+		// Log user in
+		const token = createSingedToken(user._id);
+
+		const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET);
+
+		await new Email({ user }).sendResetPasswordComplete();
+
+		await otpRecord.deleteOne();
+
+		// send success response
+		return successResponse({
+			response: res,
+			message: 'Your password has been reset',
+			code: HTTP_OK,
+			data: {
+				user,
+				token,
+				expiresIn: decoded.exp,
+			},
+		});
+		// respond invalid token
+	}),
+];

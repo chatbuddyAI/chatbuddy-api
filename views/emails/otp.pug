@@ -1,0 +1,19 @@
+extends baseEmail
+
+block content
+  h2 Email Verification
+
+  p Hi #{firstName},
+
+  p Thank you for registering with ChatBuddy. To complete your account setup, please use the following One-Time Password (OTP) to verify your email address:
+
+  p OTP: #{options.otp}
+
+  p This OTP is valid for a limited time. Please do not share it with anyone. If you did not initiate this registration, please ignore this email.
+
+  p If you have any questions or need assistance, our support team is always available to help. Feel free to reach out to us anytime.
+
+  p Thank you for choosing ChatBuddy. We're excited to have you as part of our community.
+
+  p Best regards,
+  p The ChatBuddy Team.

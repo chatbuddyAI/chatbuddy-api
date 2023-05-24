@@ -15,6 +15,7 @@ const chatRouter = require('./routes/chatRoutes');
 const messageRouter = require('./routes/messageRoutes');
 const subscriptionRouter = require('./routes/subscriptionRoutes');
 const paystackWebhookRouter = require('./routes/paystackWebhookRoutes');
+const otpRouter = require('./routes/otpRoutes');
 
 const AppError = require('./utils/appError');
 
@@ -58,34 +59,6 @@ app.use(
 	})
 );
 
-// const transporter = nodemailer.createTransport({
-// 	service: 'gmail',
-// 	host: 'smtp.gmail.com',
-// 	port: 465,
-// 	secure: true,
-// 	auth: {
-// 		user: 'chatbuddyinc@gmail.com',
-// 		pass: 'iveehzgxkglefpou',
-// 	},
-// });
-
-// // Send an email
-// const mailOptions = {
-// 	from: 'no-reply@gmail.com',
-// 	to: 'gabrielibenye@gmail.com',
-// 	subject: 'This is a test email',
-// 	text: 'This is the body of the email.',
-// 	html: '<b>Hey there! </b><br> This is our first message sent with Nodemailer<br/>',
-// };
-
-// transporter.sendMail(mailOptions, function (err, info) {
-// 	if (err) {
-// 		console.log(err);
-// 	} else {
-// 		console.log(info);
-// 	}
-// });
-
 // Serving static files
 app.use(express.static(`${__dirname}/public`));
 
@@ -96,6 +69,7 @@ app.use('/api/v1/users', userRouter);
 app.use('/api/v1/messages', messageRouter);
 app.use('/api/v1/subscription', subscriptionRouter);
 app.use('/api/v1/paystack', paystackWebhookRouter);
+app.use('/api/v1/otp', otpRouter);
 
 // Catching routes not found in the server
 app.all('*', (req, res, next) => {
