@@ -56,6 +56,7 @@ const userSchema = mongoose.Schema(
 				message: 'The passwords do not match!!',
 			},
 		},
+		emailVerifiedAt: Date,
 		passwordChangedAt: Date,
 		passwordResetToken: String,
 		passwordResetExpires: Date,
@@ -108,6 +109,11 @@ userSchema.methods.changedPasswordAfter = function (JWTTimestamp) {
 	}
 	// false means not changed
 	return false;
+};
+
+// An instance method that can be called on other files
+userSchema.methods.hasVerifiedEmail = function () {
+	return !!this.emailVerifiedAt;
 };
 
 // An instance method that can be called on other files

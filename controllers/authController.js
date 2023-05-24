@@ -16,6 +16,7 @@ const {
 	HTTP_NOT_FOUND,
 	HTTP_INTERNAL_SERVER_ERROR,
 } = require('../utils/responseStatus');
+const Email = require('../utils/email');
 
 const createSingedToken = (id) =>
 	jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -58,6 +59,13 @@ exports.register = catchAsync(async (req, res, next) => {
 		password: req.body.password,
 		passwordConfirm: req.body.passwordConfirm,
 	});
+
+	await new Email({
+		user: newUser,
+		options: {
+			fullname: newUser.name,
+		},
+	}).sendWelcome();
 
 	createSendToken(newUser, 201, res);
 });

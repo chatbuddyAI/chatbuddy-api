@@ -6,6 +6,7 @@ const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const hpp = require('hpp');
 
+// const nodemailer = require('nodemailer');
 const helloWorldRouter = require('./routes/helloWorld');
 const globalErrorHandler = require('./exceptions/handler');
 
@@ -56,6 +57,34 @@ app.use(
 		],
 	})
 );
+
+// const transporter = nodemailer.createTransport({
+// 	service: 'gmail',
+// 	host: 'smtp.gmail.com',
+// 	port: 465,
+// 	secure: true,
+// 	auth: {
+// 		user: 'chatbuddyinc@gmail.com',
+// 		pass: 'iveehzgxkglefpou',
+// 	},
+// });
+
+// // Send an email
+// const mailOptions = {
+// 	from: 'no-reply@gmail.com',
+// 	to: 'gabrielibenye@gmail.com',
+// 	subject: 'This is a test email',
+// 	text: 'This is the body of the email.',
+// 	html: '<b>Hey there! </b><br> This is our first message sent with Nodemailer<br/>',
+// };
+
+// transporter.sendMail(mailOptions, function (err, info) {
+// 	if (err) {
+// 		console.log(err);
+// 	} else {
+// 		console.log(info);
+// 	}
+// });
 
 // Serving static files
 app.use(express.static(`${__dirname}/public`));
