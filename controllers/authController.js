@@ -417,6 +417,15 @@ exports.checkIfUserIsSubscribed = catchAsync(async (req, res, next) => {
 	next();
 });
 
+exports.checkIfUserHasVerifiedEmail = catchAsync(async (req, res, next) => {
+	if (!req.user.hasVerifiedEmail()) {
+		return next(
+			new AppError('Verify your email to proceed', HTTP_UNAUTHORIZED)
+		);
+	}
+	next();
+});
+
 exports.restrictedTo =
 	(...roles) =>
 	(req, res, next) => {
