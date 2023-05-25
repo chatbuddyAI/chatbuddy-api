@@ -107,6 +107,7 @@ exports.verifyEmailOtp = [
 		return successResponse({
 			response: res,
 			message: `Email verified successfully`,
+			data: req.user,
 		});
 	}),
 ];
