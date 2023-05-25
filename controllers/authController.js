@@ -14,7 +14,6 @@ const {
 	HTTP_UNAUTHORIZED,
 	HTTP_FORBIDDEN,
 	HTTP_NOT_FOUND,
-	HTTP_INTERNAL_SERVER_ERROR,
 } = require('../utils/responseStatus');
 const Otp = require('../models/otpModel');
 const { OtpTypes } = require('../utils/enums');
