@@ -1,5 +1,5 @@
 ﻿# ChatBuddy
-
+![167-removebg-preview](https://github.com/chatbuddyAI/chatbuddy-api/assets/34938103/69114f00-1a58-4f56-a5ed-33cb62d86738)
 ChatBuddy is a chat application that allows users to have conversational experiences with an AI chatbot. It is designed to make the interactions more engaging and personalized for the users. The chatbot utilizes the OpenAI GPT-3 language model to generate its responses. Users can start a new chat and send messages to the chatbot, which will respond in real-time based on the context of the conversation. The chat history is stored and can be reviewed by the user.
 
 ## Getting Started
