@@ -69,7 +69,8 @@ exports.register = catchAsync(async (req, res, next) => {
 		passwordConfirm: req.body.passwordConfirm,
 	});
 
-	await new Email(newUser, {
+	await new Email({
+		user: newUser,
 		options: {
 			fullname: newUser.name,
 		},
