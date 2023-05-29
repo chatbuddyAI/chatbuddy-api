@@ -32,14 +32,14 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 // Limits number of request from an IP
-const limiter = rateLimit({
-	max: 200, // no of request
-	windowMs: 60 * 60 * 1000, // reset time in milliseconds (1 hour)
-	message: 'Too many requests from this IP, please try again in an hour!',
-});
+// const limiter = rateLimit({
+// 	max: 200, // no of request
+// 	windowMs: 60 * 60 * 1000, // reset time in milliseconds (1 hour)
+// 	message: 'Too many requests from this IP, please try again in an hour!',
+// });
 
 // Applying the limiter to only api routes
-app.use('/api', limiter);
+// app.use('/api', limiter);
 
 // Body Parser, allows a post body to be added to the request object
 app.use(express.json());
