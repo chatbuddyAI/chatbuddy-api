@@ -115,15 +115,18 @@ exports.updateChat = catchAsync(async (req, res, next) => {
 });
 
 exports.deleteChat = catchAsync(async (req, res, next) => {
-	const chat = await Chat.find({ uuid: req.params.uuid, user: req.user.id });
+	const chat = await Chat.findOne({ uuid: req.params.uuid, user: req.user.id });
 
-	if (isArrayEmpty(chat)) {
+	if (!chat) {
 		return next(new AppError('No chat found with that ID', HTTP_NOT_FOUND));
 	}
 
-	await ChatRequestMessage.deleteMany({ chat: chat._id });
-	await Message.deleteMany({ chat: chat._id });
-	await Chat.deleteOne({ uuid: req.params.uuid, user: req.user.id });
+	await Promise.all([
+		ChatRequestMessage.deleteMany({ chat: chat._id }),
+		Message.deleteMany({ chat: chat._id }),
+	]);
+
+	await Chat.findByIdAndDelete(chat._id);
 
 	successResponse({
 		response: res,
