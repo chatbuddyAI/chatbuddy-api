@@ -403,14 +403,14 @@ exports.checkIfUserIsSubscribed = catchAsync(async (req, res, next) => {
 		if (!req.user.hasUsedFreeTrial)
 			return next(
 				new AppError(
-					'Subscribe now and get one month free trial',
+					'Subscribe now and get one month free trial.\n Go to Settings > Manage Subscription',
 					HTTP_UNAUTHORIZED
 				)
 			);
 
 		return next(
 			new AppError(
-				'Subscribe to continue enjoying conversations with your chatbuddy',
+				'Subscribe to continue enjoying conversations with your chatbuddy.\n Go to Settings > Manage Subscription',
 				HTTP_UNAUTHORIZED
 			)
 		);
