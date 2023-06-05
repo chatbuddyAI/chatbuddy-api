@@ -49,4 +49,16 @@ jobs:
         username: ${{ secrets.DIGITALOCEAN_USERNAME }}
         key: ${{ secrets.DIGITALOCEAN_KEY }}
         source: ${{ github.sha }}.tar.gz
-        target: ~/api.chatbuddy.ng/artifacts
+        target: ${{ env.APP_PATH }}/artifacts
+    - name: Extract app archive
+      uses: appleboy/ssh-action@master
+      env:
+        GITHUB_SHA: ${{ github.sha }}
+      with:
+        host: ${{ secrets.DIGITALOCEAN_SERVER }}
+        username: ${{ secrets.DIGITALOCEAN_USERNAME }}
+        key: ${{ secrets.DIGITALOCEAN_KEY }}
+        envs: GITHUB_SHA
+        script: |
+          mkdir -p "${{ env.APP_PATH }}/releases/${GITHUB_SHA}"
+          tar -xzf ${{ env.APP_PATH }}/artifacts/${GITHUB_SHA}.tar.gz -C "${{ env.APP_PATH }}/releases/${GITHUB_SHA}"
