@@ -77,5 +77,5 @@ jobs:
         key: ${{ secrets.DIGITALOCEAN_KEY }}
         envs: GITHUB_SHA
         script: |
-          cp ${{ vars.APP_PATH }}/releases/nginx/api.chatbuddy.ng /etc/nginx/sites-available/
+          cp ${{ vars.APP_PATH }}/releases/${GITHUB_SHA}/nginx/api.chatbuddy.ng /etc/nginx/sites-available/
           sudo ln -s /etc/nginx/sites-available/api.chatbuddy.ng /etc/nginx/sites-enabled/
