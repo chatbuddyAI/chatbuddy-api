@@ -60,5 +60,5 @@ jobs:
         key: ${{ secrets.DIGITALOCEAN_KEY }}
         envs: GITHUB_SHA
         script: |
-          mkdir -p "${{ vars.APP_PATH }}/releases/${GITHUB_SHA}"
-          tar -xzf ${{ vars.APP_PATH }}/artifacts/${GITHUB_SHA}.tar.gz -C "${{ vars.APP_PATH }}/releases/${GITHUB_SHA}"
+          mkdir -p ${{ vars.APP_PATH }}/releases/${GITHUB_SHA}
+          tar -xzf ${{ vars.APP_PATH }}/artifacts/${GITHUB_SHA}.tar.gz -C ${{ vars.APP_PATH }}/releases/${GITHUB_SHA}
