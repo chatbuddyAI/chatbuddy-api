@@ -135,9 +135,9 @@ jobs:
         username: ${{ secrets.DIGITALOCEAN_USERNAME }}
         key: ${{ secrets.DIGITALOCEAN_KEY }}
         script: |
-          cd ${{ vars.APP_PATH }}/current/ && pm2 restart server.js -f          
-          
-          
+          cd ${{ vars.APP_PATH }}/current/ && pm2 kill          
+          cd ${{ vars.APP_PATH }}/current/ && pm2 start server.js -f          
+     
           
           
           
