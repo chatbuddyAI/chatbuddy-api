@@ -123,7 +123,19 @@ jobs:
           echo ${{ secrets.SUDO_PASSWORD }} | sudo -S ln -s -n -f ${{ vars.APP_PATH }}/releases/${{ github.sha }} ${{ vars.APP_PATH }}/current
           echo ${{ secrets.SUDO_PASSWORD }} | sudo -S nginx -t
           echo ${{ secrets.SUDO_PASSWORD }} | sudo -S service nginx restart
-          
+  run-app:
+    runs-on: ubuntu-latest
+    needs: [create-deployment-artifact, prepare-release-on-server, configure-nginx-on-server, run-before-hooks,activate-release]
+    name: Run app
+    steps:
+    - name: Run application
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.DIGITALOCEAN_SERVER }}
+        username: ${{ secrets.DIGITALOCEAN_USERNAME }}
+        key: ${{ secrets.DIGITALOCEAN_KEY }}
+        script: |
+          cd ${{ vars.APP_PATH }}/releases/${{ github.sha }} && pm2 start server.js          
           
           
           
