@@ -84,7 +84,7 @@ jobs:
     needs: [create-deployment-artifact,prepare-release-on-server,configure-nginx-on-server]
     name: The before hook
     steps:
-    - name: Run before hook
+    - name: Activate new release
       uses: appleboy/ssh-action@master
       env:
         GITHUB_SHA: ${{ github.sha }}
