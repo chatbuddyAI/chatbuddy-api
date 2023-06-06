@@ -176,3 +176,25 @@ jobs:
           script: |
             cd ${{ vars.APP_PATH }}/releases && ls -t -1 | tail -n +6 | xargs rm -rf;
             cd ${{ vars.APP_PATH }}/artifacts && ls -t -1 | tail -n +6 | xargs rm -rf;
+  configure-ssl:
+    runs-on: ubuntu-latest
+    needs:
+      [
+        create-deployment-artifact,
+        prepare-release-on-server,
+        configure-nginx-on-server,
+        run-before-hooks,
+        activate-release,
+        run-app,
+        clean-up,
+      ]
+    name: Configure SSL
+    steps:
+      - name: Run Certbot
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DIGITALOCEAN_SERVER }}
+          username: ${{ secrets.DIGITALOCEAN_USERNAME }}
+          key: ${{ secrets.DIGITALOCEAN_KEY }}
+          script: |
+            echo ${{ secrets.SUDO_PASSWORD }} | sudo -S sudo certbot --nginx -d api.chatbuddy.ng -n
