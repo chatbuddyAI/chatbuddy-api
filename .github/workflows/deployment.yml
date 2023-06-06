@@ -135,7 +135,7 @@ jobs:
         username: ${{ secrets.DIGITALOCEAN_USERNAME }}
         key: ${{ secrets.DIGITALOCEAN_KEY }}
         script: |
-          cd ${{ vars.APP_PATH }}/releases/${{ github.sha }} && pm2 start server.js          
+          cd ${{ vars.APP_PATH }}/releases/${{ github.sha }} && pm2 start server.js -f          
           
           
           
