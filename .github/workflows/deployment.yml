@@ -119,7 +119,7 @@ jobs:
         script: |
           echo $RELEASE_PATH
           echo $ACTIVE_RELEASE_PATH
-          echo ${{ secrets.SUDO_PASSWORD }} | sudo -S ln -s -n -f ${RELEASE_PATH} ${ACTIVE_RELEASE_PATH}
+          echo ${{ secrets.SUDO_PASSWORD }} | sudo -S ln -s -n -f ${{ vars.APP_PATH }}/releases/${{ github.sha }} ${{ vars.APP_PATH }}/current
           echo ${{ secrets.SUDO_PASSWORD }} | sudo -S nginx -t
           echo ${{ secrets.SUDO_PASSWORD }} | sudo -S service nginx restart
           
