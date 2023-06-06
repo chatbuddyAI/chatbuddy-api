@@ -106,7 +106,7 @@ jobs:
       uses: appleboy/ssh-action@master
       env:
         GITHUB_SHA: ${{ github.sha }}
-        RELEASE_PATH: ${{ vars.APP_PATH }}/releases/${GITHUB_SHA}
+        RELEASE_PATH: ${{ vars.APP_PATH }}/releases/${{ github.sha }}
         ACTIVE_RELEASE_PATH: ${{ vars.APP_PATH }}/current
         BASE_PATH: ${{ vars.APP_PATH }}
       with:
