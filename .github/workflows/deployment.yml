@@ -115,6 +115,8 @@ jobs:
         key: ${{ secrets.DIGITALOCEAN_KEY }}
         envs: GITHUB_SHA,RELEASE_PATH,ACTIVE_RELEASE_PATH,BASE_PATH
         script: |
+          echo $RELEASE_PATH
+          echo $ACTIVE_RELEASE_PATH
           echo ${{ secrets.SUDO_PASSWORD }} | sudo -S ln -s -n -f $RELEASE_PATH $ACTIVE_RELEASE_PATH
           echo ${{ secrets.SUDO_PASSWORD }} | sudo -S nginx -t
           echo ${{ secrets.SUDO_PASSWORD }} | sudo -S service nginx restart
