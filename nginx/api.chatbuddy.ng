@@ -2,8 +2,7 @@ server {
     listen 80;
     listen [::]:80;
     
-    # listen 443 ssl;
-    # server_name api.chatbuddy.ng;
+    server_name api.chatbuddy.ng;
     
     root /home/forge/api.chatbuddy.ng/current;
 
