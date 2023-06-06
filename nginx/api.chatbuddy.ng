@@ -2,7 +2,7 @@ server {
     listen 80;
     listen [::]:80;
     
-    server_name api.chatbuddy.ng www.api.chatbuddy.ng;
+    server_name api.chatbuddy.ng;
     
     root /home/forge/api.chatbuddy.ng/current;
 
