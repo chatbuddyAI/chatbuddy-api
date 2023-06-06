@@ -118,7 +118,7 @@ jobs:
         key: ${{ secrets.DIGITALOCEAN_KEY }}
         envs: GITHUB_SHA,RELEASE_PATH,ACTIVE_RELEASE_PATH,BASE_PATH,ENV_FILE
         script: |
-          printf "%s" "${{ vars.ENV_FILE }}" > ${{ vars.APP_PATH }}/config.env
+          printf "%s" "${{ secrets.ENV_FILE }}" > ${{ vars.APP_PATH }}/config.env
           echo ${{ secrets.SUDO_PASSWORD }} | sudo -S ln -s -n -f ${{ vars.APP_PATH }}/config.env ${{ vars.APP_PATH }}/releases/${{ github.sha }}
           echo ${{ secrets.SUDO_PASSWORD }} | sudo -S ln -s -n -f ${{ vars.APP_PATH }}/releases/${{ github.sha }} ${{ vars.APP_PATH }}/current
           echo ${{ secrets.SUDO_PASSWORD }} | sudo -S nginx -t
