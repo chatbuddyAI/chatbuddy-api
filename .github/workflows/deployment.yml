@@ -2,9 +2,9 @@ name: ChatBuddy deployment pipeline
 
 on:
   push:
-    branches: [ "master" ]
+    branches: ['master']
   pull_request:
-    branches: [ "master" ]
+    branches: ['master']
 
 jobs:
   create-deployment-artifact:
@@ -12,135 +12,167 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+      - uses: actions/checkout@v3
 
-    - name: Use Node.js ${{ matrix.node-version }}
-      uses: actions/setup-node@v3
-      with:
-        node-version: 16.x
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16.x
 
-    - name: Build
-      run: |
-        npm i
-        
-    - name: Package and store artifact
-      env:
-        GITHUB_SHA: ${{ github.sha }}
-      run: tar -czf "${GITHUB_SHA}".tar.gz --exclude=node_modules --exclude=.git --exclude=*.env *
-      
-    - name: Upload artifact
-      uses: actions/upload-artifact@v3
-      with:
-        name: app-build
-        path: ${{ github.sha }}.tar.gz
-  
+      - name: Build
+        run: |
+          npm i
+
+      - name: Package and store artifact
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+        run: tar -czf "${GITHUB_SHA}".tar.gz --exclude=node_modules --exclude=.git --exclude=*.env *
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: app-build
+          path: ${{ github.sha }}.tar.gz
   prepare-release-on-server:
     runs-on: ubuntu-latest
     needs: create-deployment-artifact
     name: Prepare release on server
     steps:
-    - uses: actions/download-artifact@v3
-      with: 
-        name: app-build
-    - name: Upload artifact to DigitalOcean
-      uses: appleboy/scp-action@master
-      with:
-        host: ${{ secrets.DIGITALOCEAN_SERVER }}
-        username: ${{ secrets.DIGITALOCEAN_USERNAME }}
-        key: ${{ secrets.DIGITALOCEAN_KEY }}
-        source: ${{ github.sha }}.tar.gz
-        target: ${{ vars.APP_PATH }}/artifacts
-    - name: Extract app archive
-      uses: appleboy/ssh-action@master
-      env:
-        GITHUB_SHA: ${{ github.sha }}
-      with:
-        host: ${{ secrets.DIGITALOCEAN_SERVER }}
-        username: ${{ secrets.DIGITALOCEAN_USERNAME }}
-        key: ${{ secrets.DIGITALOCEAN_KEY }}
-        envs: GITHUB_SHA
-        script: |
-          mkdir -p ${{ vars.APP_PATH }}/releases/${GITHUB_SHA}
-          tar -xzf ${{ vars.APP_PATH }}/artifacts/${GITHUB_SHA}.tar.gz -C ${{ vars.APP_PATH }}/releases/${GITHUB_SHA}
+      - uses: actions/download-artifact@v3
+        with:
+          name: app-build
+      - name: Upload artifact to DigitalOcean
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.DIGITALOCEAN_SERVER }}
+          username: ${{ secrets.DIGITALOCEAN_USERNAME }}
+          key: ${{ secrets.DIGITALOCEAN_KEY }}
+          source: ${{ github.sha }}.tar.gz
+          target: ${{ vars.APP_PATH }}/artifacts
+      - name: Extract app archive
+        uses: appleboy/ssh-action@master
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+        with:
+          host: ${{ secrets.DIGITALOCEAN_SERVER }}
+          username: ${{ secrets.DIGITALOCEAN_USERNAME }}
+          key: ${{ secrets.DIGITALOCEAN_KEY }}
+          envs: GITHUB_SHA
+          script: |
+            mkdir -p ${{ vars.APP_PATH }}/releases/${GITHUB_SHA}
+            tar -xzf ${{ vars.APP_PATH }}/artifacts/${GITHUB_SHA}.tar.gz -C ${{ vars.APP_PATH }}/releases/${GITHUB_SHA}
   configure-nginx-on-server:
     runs-on: ubuntu-latest
-    needs: [create-deployment-artifact,prepare-release-on-server]
+    needs: [create-deployment-artifact, prepare-release-on-server]
     name: Configure NGINX on server
     steps:
-    - name: Configuring NGINX
-      uses: appleboy/ssh-action@master
-      env:
-        GITHUB_SHA: ${{ github.sha }}
-      with:
-        host: ${{ secrets.DIGITALOCEAN_SERVER }}
-        username: ${{ secrets.DIGITALOCEAN_USERNAME }}
-        key: ${{ secrets.DIGITALOCEAN_KEY }}
-        envs: GITHUB_SHA
-        script: |
-          echo ${{ secrets.SUDO_PASSWORD }} | sudo -S cp ${{ vars.APP_PATH }}/releases/${GITHUB_SHA}/nginx/api.chatbuddy.ng /etc/nginx/sites-available/
-          echo ${{ secrets.SUDO_PASSWORD }} | sudo -S ln -s -n -f /etc/nginx/sites-available/api.chatbuddy.ng /etc/nginx/sites-enabled/
+      - name: Configuring NGINX
+        uses: appleboy/ssh-action@master
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+        with:
+          host: ${{ secrets.DIGITALOCEAN_SERVER }}
+          username: ${{ secrets.DIGITALOCEAN_USERNAME }}
+          key: ${{ secrets.DIGITALOCEAN_KEY }}
+          envs: GITHUB_SHA
+          script: |
+            echo ${{ secrets.SUDO_PASSWORD }} | sudo -S cp ${{ vars.APP_PATH }}/releases/${GITHUB_SHA}/nginx/api.chatbuddy.ng /etc/nginx/sites-available/
+            echo ${{ secrets.SUDO_PASSWORD }} | sudo -S ln -s -n -f /etc/nginx/sites-available/api.chatbuddy.ng /etc/nginx/sites-enabled/
   run-before-hooks:
     runs-on: ubuntu-latest
-    needs: [create-deployment-artifact,prepare-release-on-server,configure-nginx-on-server]
+    needs:
+      [
+        create-deployment-artifact,
+        prepare-release-on-server,
+        configure-nginx-on-server,
+      ]
     name: The before hook
     steps:
-    - name: Run before hook
-      uses: appleboy/ssh-action@master
-      env:
-        GITHUB_SHA: ${{ github.sha }}
-        RELEASE_PATH: ${{ vars.APP_PATH }}/releases/${{ github.sha }}
-        ACTIVE_RELEASE_PATH: ${{ vars.APP_PATH }}/current
-        BASE_PATH: ${{ vars.APP_PATH }}
-      with:
-        host: ${{ secrets.DIGITALOCEAN_SERVER }}
-        username: ${{ secrets.DIGITALOCEAN_USERNAME }}
-        key: ${{ secrets.DIGITALOCEAN_KEY }}
-        envs: GITHUB_SHA,RELEASE_PATH,ACTIVE_RELEASE_PATH,BASE_PATH
-        script: |
-          echo release folder: $RELEASE_PATH
-          cd ${{ vars.APP_PATH }}/releases/${{ github.sha }} && npm install
+      - name: Run before hook
+        uses: appleboy/ssh-action@master
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          RELEASE_PATH: ${{ vars.APP_PATH }}/releases/${{ github.sha }}
+          ACTIVE_RELEASE_PATH: ${{ vars.APP_PATH }}/current
+          BASE_PATH: ${{ vars.APP_PATH }}
+        with:
+          host: ${{ secrets.DIGITALOCEAN_SERVER }}
+          username: ${{ secrets.DIGITALOCEAN_USERNAME }}
+          key: ${{ secrets.DIGITALOCEAN_KEY }}
+          envs: GITHUB_SHA,RELEASE_PATH,ACTIVE_RELEASE_PATH,BASE_PATH
+          script: |
+            echo release folder: $RELEASE_PATH
+            cd ${{ vars.APP_PATH }}/releases/${{ github.sha }} && npm install
   activate-release:
     runs-on: ubuntu-latest
-    needs: [create-deployment-artifact, prepare-release-on-server, configure-nginx-on-server, run-before-hooks]
+    needs:
+      [
+        create-deployment-artifact,
+        prepare-release-on-server,
+        configure-nginx-on-server,
+        run-before-hooks,
+      ]
     name: Activate release
     steps:
-    - name: Activate new release
-      uses: appleboy/ssh-action@master
-      env:
-        GITHUB_SHA: ${{ github.sha }}
-        RELEASE_PATH: ${{ vars.APP_PATH }}/releases/${{ github.sha }}
-        ACTIVE_RELEASE_PATH: ${{ vars.APP_PATH }}/current
-        BASE_PATH: ${{ vars.APP_PATH }}
-        ENV_FILE: ${{ secrets.ENV_FILE }}
-      with:
-        host: ${{ secrets.DIGITALOCEAN_SERVER }}
-        username: ${{ secrets.DIGITALOCEAN_USERNAME }}
-        key: ${{ secrets.DIGITALOCEAN_KEY }}
-        envs: GITHUB_SHA,RELEASE_PATH,ACTIVE_RELEASE_PATH,BASE_PATH,ENV_FILE
-        script: |
-          printf "%s" "${{ secrets.ENV_FILE }}" > ${{ vars.APP_PATH }}/config.env
-          echo ${{ secrets.SUDO_PASSWORD }} | sudo -S ln -s -n -f ${{ vars.APP_PATH }}/config.env ${{ vars.APP_PATH }}/releases/${{ github.sha }}
-          echo ${{ secrets.SUDO_PASSWORD }} | sudo -S ln -s -n -f ${{ vars.APP_PATH }}/releases/${{ github.sha }} ${{ vars.APP_PATH }}/current
-          echo ${{ secrets.SUDO_PASSWORD }} | sudo -S nginx -t
-          echo ${{ secrets.SUDO_PASSWORD }} | sudo -S service nginx restart
+      - name: Activate new release
+        uses: appleboy/ssh-action@master
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          RELEASE_PATH: ${{ vars.APP_PATH }}/releases/${{ github.sha }}
+          ACTIVE_RELEASE_PATH: ${{ vars.APP_PATH }}/current
+          BASE_PATH: ${{ vars.APP_PATH }}
+          ENV_FILE: ${{ secrets.ENV_FILE }}
+        with:
+          host: ${{ secrets.DIGITALOCEAN_SERVER }}
+          username: ${{ secrets.DIGITALOCEAN_USERNAME }}
+          key: ${{ secrets.DIGITALOCEAN_KEY }}
+          envs: GITHUB_SHA,RELEASE_PATH,ACTIVE_RELEASE_PATH,BASE_PATH,ENV_FILE
+          script: |
+            printf "%s" "${{ secrets.ENV_FILE }}" > ${{ vars.APP_PATH }}/config.env
+            echo ${{ secrets.SUDO_PASSWORD }} | sudo -S ln -s -n -f ${{ vars.APP_PATH }}/config.env ${{ vars.APP_PATH }}/releases/${{ github.sha }}
+            echo ${{ secrets.SUDO_PASSWORD }} | sudo -S ln -s -n -f ${{ vars.APP_PATH }}/releases/${{ github.sha }} ${{ vars.APP_PATH }}/current
+            echo ${{ secrets.SUDO_PASSWORD }} | sudo -S nginx -t
+            echo ${{ secrets.SUDO_PASSWORD }} | sudo -S service nginx restart
   run-app:
     runs-on: ubuntu-latest
-    needs: [create-deployment-artifact, prepare-release-on-server, configure-nginx-on-server, run-before-hooks,activate-release]
+    needs:
+      [
+        create-deployment-artifact,
+        prepare-release-on-server,
+        configure-nginx-on-server,
+        run-before-hooks,
+        activate-release,
+      ]
     name: Run app
     steps:
-    - name: Run application
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.DIGITALOCEAN_SERVER }}
-        username: ${{ secrets.DIGITALOCEAN_USERNAME }}
-        key: ${{ secrets.DIGITALOCEAN_KEY }}
-        script: |
-          cd ${{ vars.APP_PATH }}/current/ && pm2 kill          
-          cd ${{ vars.APP_PATH }}/current/ && pm2 start server.js -f          
-     
-          
-          
-          
-          
-          
-          
+      - name: Run application
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DIGITALOCEAN_SERVER }}
+          username: ${{ secrets.DIGITALOCEAN_USERNAME }}
+          key: ${{ secrets.DIGITALOCEAN_KEY }}
+          script: |
+            cd ${{ vars.APP_PATH }}/current/ && pm2 kill          
+            cd ${{ vars.APP_PATH }}/current/ && pm2 start server.js -f
+  clean-up:
+    runs-on: ubuntu-latest
+    needs:
+      [
+        create-deployment-artifact,
+        prepare-release-on-server,
+        configure-nginx-on-server,
+        run-before-hooks,
+        activate-release,
+        run-app,
+      ]
+    name: Server Clean upp
+    steps:
+      - name: Run clean up
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DIGITALOCEAN_SERVER }}
+          username: ${{ secrets.DIGITALOCEAN_USERNAME }}
+          key: ${{ secrets.DIGITALOCEAN_KEY }}
+          script: |
+            cd ${{ vars.APP_PATH }}/releases && ls -t -1 | tail -n +6 | xargs rm -rf;
+            cd ${{ vars.APP_PATH }}/artifacts && ls -t -1 | tail -n +6 | xargs rm -rf;
