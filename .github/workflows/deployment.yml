@@ -78,4 +78,52 @@ jobs:
         envs: GITHUB_SHA
         script: |
           echo ${{ secrets.SUDO_PASSWORD }} | sudo -S cp ${{ vars.APP_PATH }}/releases/${GITHUB_SHA}/nginx/api.chatbuddy.ng /etc/nginx/sites-available/
-          echo ${{ secrets.SUDO_PASSWORD }} | sudo -S ln -s /etc/nginx/sites-available/api.chatbuddy.ng /etc/nginx/sites-enabled/
+          echo ${{ secrets.SUDO_PASSWORD }} | sudo -S ln -s -n -f /etc/nginx/sites-available/api.chatbuddy.ng /etc/nginx/sites-enabled/
+  run-before-hooks:
+    runs-on: ubuntu-latest
+    needs: [create-deployment-artifact,prepare-release-on-server,configure-nginx-on-server]
+    name: The before hook
+    steps:
+    - name: Run before hook
+      uses: appleboy/ssh-action@master
+      env:
+        GITHUB_SHA: ${{ github.sha }}
+        RELEASE_PATH: ${{ vars.APP_PATH }}/releases/${GITHUB_SHA}
+        ACTIVE_RELEASE_PATH: ${{ vars.APP_PATH }}/current
+        BASE_PATH: ${{ vars.APP_PATH }}
+      with:
+        host: ${{ secrets.DIGITALOCEAN_SERVER }}
+        username: ${{ secrets.DIGITALOCEAN_USERNAME }}
+        key: ${{ secrets.DIGITALOCEAN_KEY }}
+        envs: GITHUB_SHA,RELEASE_PATH,ACTIVE_RELEASE_PATH,BASE_PATH
+        script: npm install
+  activate-release:
+    runs-on: ubuntu-latest
+    needs: [create-deployment-artifact, prepare-release-on-server, configure-nginx-on-server, run-before-hooks]
+    name: Activate release
+    steps:
+    - name: Run before hook
+      uses: appleboy/ssh-action@master
+      env:
+        GITHUB_SHA: ${{ github.sha }}
+        RELEASE_PATH: ${{ vars.APP_PATH }}/releases/${GITHUB_SHA}
+        ACTIVE_RELEASE_PATH: ${{ vars.APP_PATH }}/current
+        BASE_PATH: ${{ vars.APP_PATH }}
+      with:
+        host: ${{ secrets.DIGITALOCEAN_SERVER }}
+        username: ${{ secrets.DIGITALOCEAN_USERNAME }}
+        key: ${{ secrets.DIGITALOCEAN_KEY }}
+        envs: GITHUB_SHA,RELEASE_PATH,ACTIVE_RELEASE_PATH,BASE_PATH
+        script: |
+          echo ${{ secrets.SUDO_PASSWORD }} | sudo -S ln -s -n -f $RELEASE_PATH $ACTIVE_RELEASE_PATH
+          echo ${{ secrets.SUDO_PASSWORD }} | sudo -S nginx -t
+          echo ${{ secrets.SUDO_PASSWORD }} | sudo -S service nginx restart
+          
+          
+          
+          
+          
+          
+          
+          
+          
