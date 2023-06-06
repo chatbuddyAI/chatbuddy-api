@@ -5,7 +5,7 @@ server {
     # listen 443 ssl;
     # server_name api.chatbuddy.ng;
     
-    root /home/forge/api.chatbuddy.ng/current
+    root /home/forge/api.chatbuddy.ng/current;
 
     location / {
         proxy_pass http://localhost:7576; #whatever port your app runs on
