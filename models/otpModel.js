@@ -2,6 +2,8 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 const moment = require('moment');
 const { OtpTypes } = require('../utils/enums');
+const AppError = require('../utils/appError');
+const { HTTP_UNAUTHORIZED } = require('../utils/responseStatus');
 
 const otpSchema = new mongoose.Schema(
 	{
@@ -15,7 +17,7 @@ const otpSchema = new mongoose.Schema(
 		},
 		expiresAt: {
 			type: Date,
-			default: moment().add(1, 'hour').toISOString(),
+			default: () => moment().add(1, 'hour').toISOString(),
 		},
 		type: {
 			type: String,
@@ -38,33 +40,23 @@ otpSchema.pre('save', async function (next) {
 });
 
 otpSchema.methods.hasPassedOneMinute = function () {
-	const createdAt = new Date(this.createdAt);
-	const now = new Date();
-	const timeDifference = now.getTime() - createdAt.getTime();
-	const minutesPassed = Math.floor(timeDifference / 1000 / 60);
-
-	return minutesPassed >= 1;
+	return moment().diff(this.createdAt, 'minutes') >= 1;
 };
 
-// otpSchema.methods.checkIfUserCanVerifyThisOtp = async function (
-// 	req,
-// 	next,
-// 	otpUser
-// ) {
-// 	if (req.user.id !== otpUser._id) {
-// 		return next(
-// 			new AppError(
-// 				'You are not authorized to make this request',
-// 				HTTP_UNAUTHORIZED
-// 			)
-// 		);
-// 	}
-// };
+otpSchema.methods.checkIfUserCanVerifyThisOtp = async function (req, otpUser) {
+	if (req.user.id !== otpUser._id) {
+		throw new AppError(
+			'You are not authorized to make this request',
+			HTTP_UNAUTHORIZED
+		);
+	}
+};
 
 otpSchema.methods.isValid = async function (otp) {
-	return !(
-		moment().isAfter(this.expiresAt) || !(await bcrypt.compare(otp, this.otp))
-	);
+	const isExpired = moment().isAfter(this.expiresAt);
+	const isMatch = await bcrypt.compare(otp, this.otp);
+
+	return !isExpired && isMatch;
 };
 
 const Otp = mongoose.model('Otp', otpSchema);
