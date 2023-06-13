@@ -4,7 +4,6 @@ const htmlToText = require('html-to-text');
 
 const transporterOptions = {
 	production: {
-		service: process.env.MAIL_SERVICE,
 		host: process.env.MAIL_HOST,
 		port: process.env.MAIL_PORT,
 		auth: {
@@ -21,7 +20,8 @@ const transporterOptions = {
 			pass: process.env.MAIL_PASSWORD,
 		},
 	},
-	default: {
+	development: {
+		service: process.env.MAIL_SERVICE,
 		host: process.env.MAIL_HOST,
 		port: process.env.MAIL_PORT,
 		auth: {
@@ -32,7 +32,7 @@ const transporterOptions = {
 };
 
 const transporter = nodemailer.createTransport(
-	transporterOptions[process.env.NODE_ENV] || transporterOptions.default
+	transporterOptions[process.env.NODE_ENV] || transporterOptions.development
 );
 
 module.exports = class Email {
