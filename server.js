@@ -7,43 +7,36 @@ process.on('uncaughtException', (err) => {
 	process.exit(1);
 });
 
-// This loads data from the config.env file into the application
 dotenv.config({ path: './config.env' });
 
 const app = require('./app');
 
 mongoose.set('strictQuery', true);
 
-/** Connecting to Atlas DB
-
-    const DB_CONNECTION_STRING = process.env.DATABASE.replace(
-        '<PASSWORD>',
-        encodeURIComponent(process.env.DATABASE_PASSWORD)
-    );
-
-    mongoose.connect(DB_CONNECTION_STRING).then(() => {
-        console.log('DB Connection Successful');
-    });
-
-*/
-
-// Connecting to local DB
-if (
-	process.env.NODE_ENV === 'development' ||
-	process.env.NODE_ENV === 'mobile'
-) {
-	mongoose.connect(process.env.DATABASE_LOCAL).then(() => {
-		console.log('DB Connection Successful');
-	});
-} else if (process.env.NODE_ENV === 'staging') {
-	const DB_CONNECTION_STRING = process.env.DATABASE.replace(
+const dbConnectionOptions = {
+	development: process.env.DATABASE_LOCAL,
+	mobile: process.env.DATABASE_LOCAL,
+	staging: process.env.DATABASE.replace(
 		'<PASSWORD>',
 		encodeURIComponent(process.env.DATABASE_PASSWORD)
-	);
+	),
+	production: process.env.DATABASE.replace(
+		'<PASSWORD>',
+		encodeURIComponent(process.env.DATABASE_PASSWORD)
+	),
+};
 
-	mongoose.connect(DB_CONNECTION_STRING).then(() => {
-		console.log(`DB Connection Successful`);
-	});
+const environment = process.env.NODE_ENV || 'development';
+const dbConnectionString = dbConnectionOptions[environment];
+
+async function connectToDatabase() {
+	try {
+		await mongoose.connect(dbConnectionString);
+		console.log('DB Connection Successful');
+	} catch (error) {
+		console.log('DB Connection Error:', error);
+		process.exit(1);
+	}
 }
 
 const port = process.env.PORT || 4000;
@@ -59,3 +52,5 @@ process.on('unhandledRejection', (err) => {
 		process.exit(1);
 	});
 });
+
+connectToDatabase();

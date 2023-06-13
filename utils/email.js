@@ -2,54 +2,71 @@ const nodemailer = require('nodemailer');
 const pug = require('pug');
 const htmlToText = require('html-to-text');
 
+const transporterOptions = {
+	production: {
+		service: process.env.MAIL_SERVICE,
+		host: process.env.MAIL_HOST,
+		port: process.env.MAIL_PORT,
+		auth: {
+			user: process.env.MAIL_USERNAME,
+			pass: process.env.MAIL_PASSWORD,
+		},
+	},
+	staging: {
+		service: process.env.MAIL_SERVICE,
+		host: process.env.MAIL_HOST,
+		port: process.env.MAIL_PORT,
+		auth: {
+			user: process.env.MAIL_USERNAME,
+			pass: process.env.MAIL_PASSWORD,
+		},
+	},
+	default: {
+		host: process.env.MAIL_HOST,
+		port: process.env.MAIL_PORT,
+		auth: {
+			user: process.env.MAIL_USERNAME,
+			pass: process.env.MAIL_PASSWORD,
+		},
+	},
+};
+
+const transporter = nodemailer.createTransport(
+	transporterOptions[process.env.NODE_ENV] || transporterOptions.default
+);
+
 module.exports = class Email {
 	constructor({ user, options = {} }) {
 		this.to = user.email;
 		this.options = options;
-		this.firstName = user.name == null ? '' : user.name.split(' ')[0];
+		this.firstName = user.name ? user.name.split(' ')[0] : '';
 		this.from = `${process.env.MAIL_FROM_NAME} <${process.env.MAIL_FROM_ADDRESS}>`;
+		this.templates = {
+			welcome: this.renderTemplate('welcome'),
+			otp: this.renderTemplate('otp'),
+			emailVerified: this.renderTemplate('emailVerified'),
+			resetPassword: this.renderTemplate('resetPassword'),
+			resetPasswordOtp: this.renderTemplate('resetPasswordOtp'),
+			resetPasswordComplete: this.renderTemplate('resetPasswordComplete'),
+		};
 	}
 
-	newTransport() {
-		if (process.env.NODE_ENV === 'production') {
-			// prod emails
-			return true;
-		}
-
-		if (process.env.NODE_ENV === 'staging') {
-			return nodemailer.createTransport({
-				service: process.env.MAIL_SERVICE,
-				host: process.env.MAIL_HOST,
-				port: process.env.MAIL_PORT,
-				auth: {
-					user: process.env.MAIL_USERNAME,
-					pass: process.env.MAIL_PASSWORD,
-				},
-			});
-		}
-
-		// dev / local
-		return nodemailer.createTransport({
-			host: process.env.MAIL_HOST,
-			port: process.env.MAIL_PORT,
-			auth: {
-				user: process.env.MAIL_USERNAME,
-				pass: process.env.MAIL_PASSWORD,
-			},
-		});
+	renderTemplate(template) {
+		const templatePath = `${__dirname}/../views/emails/${template}.pug`;
+		return pug.compileFile(templatePath);
 	}
 
 	async send(template, subject) {
-		// render html
+		const templateFn = this.templates[template];
+		if (!templateFn) {
+			throw new Error(`Template "${template}" not found.`);
+		}
 
-		const html = pug.renderFile(
-			`${__dirname}/../views/emails/${template}.pug`,
-			{
-				firstName: this.firstName,
-				subject,
-				options: this.options,
-			}
-		);
+		const html = templateFn({
+			firstName: this.firstName,
+			subject,
+			options: this.options,
+		});
 
 		const mailOptions = {
 			from: this.from,
@@ -59,7 +76,7 @@ module.exports = class Email {
 			text: htmlToText.convert(html),
 		};
 
-		await this.newTransport().sendMail(mailOptions);
+		await transporter.sendMail(mailOptions);
 	}
 
 	async sendWelcome() {
