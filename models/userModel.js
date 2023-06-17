@@ -33,7 +33,7 @@ const userSchema = mongoose.Schema(
 		},
 		isSubscribed: {
 			type: Boolean,
-			default: false,
+			default: true,
 		},
 		hasUsedFreeTrial: {
 			type: Boolean,
@@ -60,6 +60,7 @@ const userSchema = mongoose.Schema(
 			type: Date,
 			default: null,
 		},
+		freeTrialStartDate: Date,
 		passwordChangedAt: Date,
 		passwordResetToken: String,
 		passwordResetExpires: Date,

@@ -22,6 +22,7 @@ class PaystackService {
 					email: email,
 					amount: amountInKobo,
 					metadata: metadata,
+					plan: planCode,
 				},
 				{
 					headers: {

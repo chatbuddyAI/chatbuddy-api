@@ -1,13 +1,15 @@
-const mongoose = require('mongoose');
 const dotenv = require('dotenv');
+
+dotenv.config({ path: './config.env' });
+
+const mongoose = require('mongoose');
+const cronJobs = require('./cron');
 
 process.on('uncaughtException', (err) => {
 	console.log('UNCAUGHT EXCEPTION! Shutting down...');
 	console.log(err.name, err.message);
 	process.exit(1);
 });
-
-dotenv.config({ path: './config.env' });
 
 const app = require('./app');
 
@@ -38,6 +40,8 @@ async function connectToDatabase() {
 		process.exit(1);
 	}
 }
+//TODO: (() => new Date().toLocaleString())() // use that to tell the time and dat tio chatbuddy
+cronJobs.start();
 
 const port = process.env.PORT || 4000;
 

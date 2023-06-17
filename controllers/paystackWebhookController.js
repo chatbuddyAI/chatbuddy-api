@@ -3,11 +3,11 @@ const crypto = require('crypto');
 // const catchAsync = require('../utils/catchAsync');
 const User = require('../models/userModel');
 const Card = require('../models/cardModel');
-const PaystackService = require('../services/paystackService');
+// const PaystackService = require('../services/paystackService');
 const Subscription = require('../models/subscriptionModel');
 
 const secret = process.env.PAYSTACK_SECRET_KEY;
-const paystack = new PaystackService();
+// const paystack = new PaystackService();
 
 exports.webhook = async (req, res, next) => {
 	//validate event
@@ -47,82 +47,62 @@ exports.webhook = async (req, res, next) => {
 				// Save authorized card details to the database
 
 				if (
-					!(
-						event.data.metadata.transaction_type &&
-						event.data.metadata.transaction_type === 'addPaymentMethod'
-					)
+					event.data.metadata.transaction_type &&
+					event.data.metadata.transaction_type !== 'addPaymentMethod'
 				) {
 					console.log('Transaction type is not addPaymentMethod');
 
-					const card = Card.findOne({
-						user: user._id,
-						last4: event.data.authorization.last4,
-						expMonth: event.data.authorization.exp_month,
-						expYear: event.data.authorization.exp_year,
-						bin: event.data.authorization.bin,
-					});
-					// if user uses new card for the subscription then update their card on our database to the new one
-					// this is so because paystack will be handling the updating card for subscription part - hope i understand this in the future {stressed emoji}
-					if (!card) {
-						console.log(`Updating card details for user:${user.email}`);
-
-						Card.updateOne({ user: user._id }, cardData);
-					}
-					break;
-				}
-				console.log(`Saving card for user:${user.email}`);
-
-				// If card does not exist create the card
-				await Card.create(cardData);
-
-				if (!user.hasUsedFreeTrial) {
-					console.log(
-						`Subscribing and starting free trial for user:${user.email}`
+					await Card.findOneAndUpdate(
+						{
+							user: user._id,
+							last4: event.data.authorization.last4,
+							expMonth: event.data.authorization.exp_month,
+							expYear: event.data.authorization.exp_year,
+							bin: event.data.authorization.bin,
+						},
+						cardData,
+						{ upsert: true }
 					);
 
-					await paystack.createSubscription({
-						customerEmail: event.data.customer.email,
-						authorizationCode: event.data.authorization.authorization_code,
-						planCode: event.data.metadata.plan_code,
-						startDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-					});
-
-					user.hasUsedFreeTrial = true;
-					await user.save({ validateBeforeSave: false });
+					break;
 				}
-				console.log(
-					`Refunding user:${user.email} the amount of ${
-						event.data.amount / 100
-					}`
-				);
 
-				await paystack.refundTransaction(event.data.reference);
+				console.log(`Saving card for user:${user.email}`);
+				await Card.create(cardData);
 
+				// if (!user.hasUsedFreeTrial) {
+				// 	console.log(
+				// 		`Subscribing and starting free trial for user:${user.email}`
+				// 	);
+
+				// 	const startDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+				// 	await Promise.all([
+				// 		paystack.createSubscription({
+				// 			customerEmail: event.data.customer.email,
+				// 			authorizationCode: event.data.authorization.authorization_code,
+				// 			planCode: event.data.metadata.plan_code,
+				// 			startDate,
+				// 		}),
+				// 		user.update(
+				// 			{ hasUsedFreeTrial: true },
+				// 			{ validateBeforeSave: false }
+				// 		),
+				// 	]);
+				// }
+
+				// console.log(
+				// 	`Refunding user:${user.email} the amount of ${
+				// 		event.data.amount / 100
+				// 	}`
+				// );
+
+				// await paystack.refundTransaction(event.data.reference);
 				break;
 			case 'subscription.create':
 				console.log(`${event.event} event for user:${user.email}`);
 
-				if (subscription) {
-					console.log(`Updating subscription for user:${user.email}`);
-					await Subscription.updateOne(
-						{ user: user._id },
-						{
-							user: user._id,
-							planName: event.data.plan.name,
-							planCode: event.data.plan.plan_code,
-							subscriptionCode: event.data.subscription_code,
-							subscriptionAmount: event.data.plan.amount,
-							subscriptionInterval: event.data.plan.interval,
-							status: event.data.status,
-							nextPaymentDate: event.data.next_payment_date,
-							emailToken: event.data.email_token,
-						}
-					);
-					break;
-				}
-
-				console.log(`Creating subscription for user:${user.email}`);
-				await Subscription.create({
+				const subscriptionData = {
 					user: user._id,
 					planName: event.data.plan.name,
 					planCode: event.data.plan.plan_code,
@@ -132,11 +112,22 @@ exports.webhook = async (req, res, next) => {
 					status: event.data.status,
 					nextPaymentDate: event.data.next_payment_date,
 					emailToken: event.data.email_token,
-				});
+				};
 
-				console.log(`Setting isSubscribed to true for user:${user.email}`);
-				user.isSubscribed = true;
-				await user.save({ validateBeforeSave: false });
+				if (subscription) {
+					console.log(`Updating subscription for user:${user.email}`);
+					await Subscription.findOneAndUpdate(
+						{ user: user._id },
+						subscriptionData,
+						{ upsert: true }
+					);
+				} else {
+					console.log(`Creating subscription for user:${user.email}`);
+					await Promise.all([
+						Subscription.create(subscriptionData),
+						user.update({ isSubscribed: true }, { validateBeforeSave: false }),
+					]);
+				}
 
 				break;
 
