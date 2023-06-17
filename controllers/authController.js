@@ -18,6 +18,7 @@ const {
 const Otp = require('../models/otpModel');
 const { OtpTypes } = require('../utils/enums');
 const Subscription = require('../models/subscriptionModel');
+const Card = require('../models/cardModel');
 
 const createSingedToken = (id) =>
 	jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -73,11 +74,11 @@ exports.register = catchAsync(async (req, res, next) => {
 		passwordConfirm,
 	});
 
-	const subscription = {
+	const subscriptionData = {
 		user: newUser._id,
 		planName: 'Free Trial',
-		planCode: 'FrEeTrial1998',
-		subscriptionCode: 'FrEeTrial1998',
+		planCode: 'PLN_FrEeTrial1998',
+		subscriptionCode: 'SUB_FrEeTrial1998',
 		subscriptionAmount: '0',
 		subscriptionInterval: 'monthly',
 		status: 'free-trial',
@@ -85,7 +86,24 @@ exports.register = catchAsync(async (req, res, next) => {
 		emailToken: 'freeTrial',
 	};
 
-	await Subscription.create(subscription);
+	const cardData = {
+		user: newUser._id,
+		authorizationCode: 'ATH_FrEeTrial1998',
+		cardType: 'Chatbuddy Free',
+		last4: '2023',
+		expMonth: '12',
+		expYear: '2077',
+		bin: '170623',
+		bank: 'Chatbuddy Bank',
+		signature: 'SIG_FrEeTrial1998',
+		accountName: newUser.name,
+		reference: 'REF_FrEeTrial1998',
+	};
+
+	await Promise.all([
+		Subscription.create(subscriptionData),
+		Card.create(cardData),
+	]);
 
 	const emailOptions = {
 		fullname: newUser.name,
