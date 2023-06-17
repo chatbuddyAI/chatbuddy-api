@@ -2,7 +2,7 @@ const User = require('../models/userModel');
 const Email = require('../utils/email');
 
 const checkIfFreeTrailIsExpiredAndUpdateSubscription = async () => {
-	const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // Calculate the date 30 days ago
+	const thirtyDaysAgo = new Date(Date.now() - 1 * 24 * 60 * 60 * 1000); // Calculate the date 30 days ago
 	const filter = {
 		freeTrialStartDate: { $lte: thirtyDaysAgo },
 		isSubscribed: true,
