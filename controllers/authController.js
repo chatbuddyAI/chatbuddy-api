@@ -82,7 +82,7 @@ exports.register = catchAsync(async (req, res, next) => {
 		subscriptionAmount: '0',
 		subscriptionInterval: 'monthly',
 		status: 'free-trial',
-		nextPaymentDate: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+		nextPaymentDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
 		emailToken: 'freeTrial',
 	};
 
