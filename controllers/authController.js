@@ -17,6 +17,7 @@ const {
 } = require('../utils/responseStatus');
 const Otp = require('../models/otpModel');
 const { OtpTypes } = require('../utils/enums');
+const Subscription = require('../models/subscriptionModel');
 
 const createSingedToken = (id) =>
 	jwt.sign({ id }, process.env.JWT_SECRET, {
@@ -62,20 +63,37 @@ function generateOtp() {
 }
 
 exports.register = catchAsync(async (req, res, next) => {
+	const { name, email, password, passwordConfirm } = req.body;
+
 	const newUser = await User.create({
-		name: req.body.name,
-		email: req.body.email,
+		name,
+		email,
 		freeTrialStartDate: Date.now(),
-		password: req.body.password,
-		passwordConfirm: req.body.passwordConfirm,
+		password,
+		passwordConfirm,
 	});
 
-	console.log(process.env.MAIL_SERVICE);
+	const subscription = {
+		user: newUser._id,
+		planName: 'Free Trial',
+		planCode: 'FrEeTrial1998',
+		subscriptionCode: 'FrEeTrial1998',
+		subscriptionAmount: '0',
+		subscriptionInterval: 'monthly',
+		status: 'free-trial',
+		nextPaymentDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+		emailToken: 'freeTrial',
+	};
+
+	await Subscription.create(subscription);
+
+	const emailOptions = {
+		fullname: newUser.name,
+	};
+
 	await new Email({
 		user: newUser,
-		options: {
-			fullname: newUser.name,
-		},
+		options: emailOptions,
 	}).sendWelcome();
 
 	createSendToken(newUser, 201, res);

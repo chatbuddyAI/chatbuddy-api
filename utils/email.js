@@ -102,4 +102,8 @@ module.exports = class Email {
 	async sendResetPasswordComplete() {
 		await this.send('resetPasswordComplete', 'Password Reset Complete');
 	}
+
+	async sendFreeTrialExpired() {
+		await this.send('freeTrialExpired', 'Free trial Expried ');
+	}
 };
