@@ -1,0 +1,19 @@
+extends baseEmail
+
+block content
+  p Hi #{firstName},
+
+  p Thank you for joining us. We're excited to have you on board.
+  
+  p Your one-month free trial period has started and it will expire on 
+    span.expiry-date= expiryDate
+    
+  p Make the most of this trial period to explore our features and see how our service can benefit you.
+  
+  p If you have any questions or need assistance, feel free to reach out to our support team.
+  
+  p Happy exploring!
+  
+  p Best regards,
+    span Your Company Name
+

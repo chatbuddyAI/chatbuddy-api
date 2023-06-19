@@ -82,7 +82,7 @@ exports.register = catchAsync(async (req, res, next) => {
 		subscriptionAmount: '0',
 		subscriptionInterval: 'monthly',
 		status: 'free-trial',
-		nextPaymentDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000),
+		nextPaymentDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
 		emailToken: 'freeTrial',
 	};
 
@@ -109,10 +109,16 @@ exports.register = catchAsync(async (req, res, next) => {
 		fullname: newUser.name,
 	};
 
-	await new Email({
-		user: newUser,
-		options: emailOptions,
-	}).sendWelcome();
+	await Promise.all([
+		new Email({
+			user: newUser,
+			options: emailOptions,
+		}).sendWelcome(),
+		new Email({
+			user: newUser,
+			options: emailOptions,
+		}).sendFreeTrialAnnouncement(),
+	]);
 
 	createSendToken(newUser, 201, res);
 });

@@ -1,6 +1,7 @@
 const nodemailer = require('nodemailer');
 const pug = require('pug');
 const htmlToText = require('html-to-text');
+const AppError = require('./appError');
 
 const transporterOptions = {
 	production: {
@@ -48,6 +49,7 @@ module.exports = class Email {
 			resetPassword: this.renderTemplate('resetPassword'),
 			resetPasswordOtp: this.renderTemplate('resetPasswordOtp'),
 			resetPasswordComplete: this.renderTemplate('resetPasswordComplete'),
+			freeTrialAnnouncement: this.renderTemplate('freeTrialAnnouncement'),
 		};
 	}
 
@@ -59,7 +61,7 @@ module.exports = class Email {
 	async send(template, subject) {
 		const templateFn = this.templates[template];
 		if (!templateFn) {
-			throw new Error(`Template "${template}" not found.`);
+			throw new AppError(`Template "${template}" not found.`);
 		}
 
 		const html = templateFn({
@@ -105,5 +107,9 @@ module.exports = class Email {
 
 	async sendFreeTrialExpired() {
 		await this.send('freeTrialExpired', 'Free trial Expried ');
+	}
+
+	async sendFreeTrialAnnouncement() {
+		await this.send('freeTrialAnnouncement', 'Free trial Announcement  ');
 	}
 };
