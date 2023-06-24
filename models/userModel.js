@@ -60,6 +60,10 @@ const userSchema = mongoose.Schema(
 			type: Date,
 			default: null,
 		},
+		freeDailyMessageCount: {
+			type: Number,
+			default: 0,
+		},
 		freeTrialStartDate: Date,
 		passwordChangedAt: Date,
 		passwordResetToken: String,

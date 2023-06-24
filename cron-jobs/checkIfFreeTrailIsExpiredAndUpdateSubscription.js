@@ -13,7 +13,8 @@ const checkIfFreeTrailIsExpiredAndUpdateSubscription = async () => {
 	};
 	const options = { multi: true, validateBeforeSave: false };
 
-	await User.updateMany(filter, update, options);
+	const result = await User.updateMany(filter, update, options);
+	console.log(`${result.nModified} user(s) updated for free trial expiration.`);
 
 	const users = await User.find(filter);
 
@@ -27,6 +28,10 @@ const checkIfFreeTrailIsExpiredAndUpdateSubscription = async () => {
 	);
 
 	await Promise.all(emailPromises);
+
+	console.log(
+		`Free trial expiration emails sent to ${emailPromises.length} user(s).`
+	);
 };
 
 // const activateFreeTrial = async (user) => {

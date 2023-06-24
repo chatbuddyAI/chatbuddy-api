@@ -443,22 +443,21 @@ exports.protect = catchAsync(async (req, res, next) => {
 });
 
 exports.checkIfUserIsSubscribed = catchAsync(async (req, res, next) => {
-	if (!req.user.isSubscribed) {
-		if (!req.user.hasUsedFreeTrial)
-			return next(
-				new AppError(
-					'Subscribe now and get one month free trial.\n Go to Settings > Manage Subscription',
-					HTTP_UNAUTHORIZED
-				)
-			);
+	const freeDailyMessageCap = process.env.FREE_DAILY_MESSAGE_CAP || 5;
+	const { isSubscribed, hasUsedFreeTrial, freeDailyMessageCount } = req.user;
 
-		return next(
-			new AppError(
-				'Subscribe to continue enjoying conversations with your chatbuddy.\n Go to Settings > Manage Subscription',
-				HTTP_UNAUTHORIZED
-			)
-		);
+	if (!isSubscribed && freeDailyMessageCount >= freeDailyMessageCap) {
+		const errorMessage = hasUsedFreeTrial
+			? 'Subscribe to continue enjoying conversations with your chatbuddy.\n Go to Settings > Manage Subscription'
+			: 'Subscribe now and get one month free trial.\n Go to Settings > Manage Subscription';
+
+		return next(new AppError(errorMessage, HTTP_UNAUTHORIZED));
 	}
+
+	// Increment the freeDailyMessageCount and save it to the database
+	req.user.freeDailyMessageCount += 1;
+	await req.user.save({ validateBeforeSave: false });
+
 	next();
 });
 
