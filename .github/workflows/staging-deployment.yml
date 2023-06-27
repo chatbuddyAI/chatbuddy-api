@@ -34,7 +34,7 @@ jobs:
 
       - name: Generate env.json
         run: |
-          echo '${{ secrets.JSON_ENV }}' | jq '.' > env.json
+          echo '${{ vars.JSON_ENV }}' | jq '.' > env.json
 
       - name: serverless deploy to aws lambda
         uses: serverless/github-action@master
