@@ -5,4 +5,4 @@
 const serverless = require('serverless-http');
 const app = require('./app');
 
-module.exports.chatbuddy = serverless(app);
+module.exports.hello = serverless(app);

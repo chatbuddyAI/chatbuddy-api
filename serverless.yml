@@ -8,7 +8,7 @@ provider:
 
 functions:
   hello:
-    handler: handler.chatbuddy
+    handler: handler.hello
     events:
       - http: ANY /{proxy+}
       - http: ANY /
