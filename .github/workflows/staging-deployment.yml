@@ -33,7 +33,7 @@ jobs:
         run: npm ci
 
       - name: Generate env.json
-        run: echo {{ vars.ENV_JSON }} | base64 --decode > env.json
+        run: echo ${{ vars.ENV_JSON }} | base64 --decode > env.json
 
       - name: serverless deploy to aws lambda
         uses: serverless/github-action@master
