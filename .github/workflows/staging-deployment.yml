@@ -33,8 +33,7 @@ jobs:
         run: npm ci
 
       - name: Generate env.json
-        run: |
-          echo '${{ vars.JSON_ENV }}' | jq '.' > env.json
+        run: printf "%s" "${{ vars.ENV_JSON }}" > env.json
 
       - name: serverless deploy to aws lambda
         uses: serverless/github-action@master
