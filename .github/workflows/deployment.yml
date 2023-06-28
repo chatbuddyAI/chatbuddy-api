@@ -119,14 +119,14 @@ jobs:
           RELEASE_PATH: ${{ vars.APP_PATH }}/releases/${{ github.sha }}
           ACTIVE_RELEASE_PATH: ${{ vars.APP_PATH }}/current
           BASE_PATH: ${{ vars.APP_PATH }}
-          ENV_FILE: ${{ secrets.ENV_FILE }}
+          ENV_FILE: ${{ vars.ENV_FILE }}
         with:
           host: ${{ secrets.DIGITALOCEAN_SERVER }}
           username: ${{ secrets.DIGITALOCEAN_USERNAME }}
           key: ${{ secrets.DIGITALOCEAN_KEY }}
           envs: GITHUB_SHA,RELEASE_PATH,ACTIVE_RELEASE_PATH,BASE_PATH,ENV_FILE
           script: |
-            printf "%s" "${{ secrets.ENV_FILE }}" > ${{ vars.APP_PATH }}/config.env
+            printf "%s" "${{ vars.ENV_FILE }}" > ${{ vars.APP_PATH }}/config.env
             echo ${{ secrets.SUDO_PASSWORD }} | sudo -S ln -s -n -f ${{ vars.APP_PATH }}/config.env ${{ vars.APP_PATH }}/releases/${{ github.sha }}
             echo ${{ secrets.SUDO_PASSWORD }} | sudo -S ln -s -n -f ${{ vars.APP_PATH }}/releases/${{ github.sha }} ${{ vars.APP_PATH }}/current
             echo ${{ secrets.SUDO_PASSWORD }} | sudo -S nginx -t
