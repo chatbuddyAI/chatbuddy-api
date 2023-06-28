@@ -10,7 +10,7 @@ provider:
 
 functions:
   hello:
-    handler: handler.initializeApi
+    handler: handler.hello
     events:
       - http: ANY /
       - http: ANY /{proxy+}
