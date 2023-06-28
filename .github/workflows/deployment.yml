@@ -1,9 +1,7 @@
-name: ChatBuddy deployment pipeline
+name: Production deployment pipeline
 
 on:
   push:
-    branches: ['master']
-  pull_request:
     branches: ['master']
 
 jobs:

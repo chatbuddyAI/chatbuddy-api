@@ -1,9 +1,7 @@
-name: Staging deployment to aws Lambda
+name: Staging deployment
 
 on:
   push:
-    branches: ['staging']
-  pull_request:
     branches: ['staging']
 
 jobs:
