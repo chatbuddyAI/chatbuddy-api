@@ -5,6 +5,8 @@ provider:
   runtime: nodejs18.x
   stage: staging
   region: eu-west-2
+  timeout: 20
+  memorySize: 2048
 
 functions:
   hello:
