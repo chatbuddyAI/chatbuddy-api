@@ -19,15 +19,20 @@ const otpRouter = require('./routes/otpRoutes');
 
 const AppError = require('./utils/appError');
 const connectToDatabase = require('./utils/connectToDatabase');
+const cronJobs = require('./cron');
 
-connectToDatabase();
+console.log(`You are in ${process.env.NODE_ENV} environment.`);
+
+console.log('Connecting to database.');
+connectToDatabase().then(() => {
+	console.log('Scheduling cron operations');
+	cronJobs.start();
+});
 
 const app = express();
 
 //Set security http headers
 app.use(helmet());
-
-console.log(`You are in ${process.env.NODE_ENV} environment.`);
 
 // Development Logging
 if (

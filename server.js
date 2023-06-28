@@ -2,8 +2,6 @@ const dotenv = require('dotenv');
 
 dotenv.config({ path: './config.env' });
 
-const cronJobs = require('./cron');
-
 process.on('uncaughtException', (err) => {
 	console.log('UNCAUGHT EXCEPTION! Shutting down...');
 	console.log(err.name, err.message);
@@ -13,7 +11,6 @@ process.on('uncaughtException', (err) => {
 const app = require('./app');
 
 //TODO: (() => new Date().toLocaleString())() // use that to tell the time and dat tio chatbuddy
-cronJobs.start();
 
 const port = process.env.PORT || 4000;
 
