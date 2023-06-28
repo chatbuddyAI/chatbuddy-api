@@ -4,6 +4,8 @@ const helmet = require('helmet');
 // const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
+const bodyParser = require('body-parser');
+const cors = require('cors');
 const hpp = require('hpp');
 
 // const nodemailer = require('nodemailer');
@@ -23,6 +25,9 @@ const app = express();
 
 //Set security http headers
 app.use(helmet());
+
+// app.use(cors());
+// app.use(bodyParser.json());
 
 console.log(`You are in ${process.env.NODE_ENV} environment.`);
 
