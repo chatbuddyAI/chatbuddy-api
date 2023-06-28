@@ -1,0 +1,57 @@
+name: Staging deployment
+
+on:
+  push:
+    branches: ['staging']
+
+jobs:
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [18.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Get node version
+        id: node
+        run: |
+          echo "version=$(node -v)" >> $GITHUB_OUTPUT
+
+      - name: Cache node modules
+        id: cache-npm
+        uses: actions/cache@v3
+        env:
+          cache-name: cache-node-modules
+        with:
+          path: |
+            **/node_modules
+          key: ${{ runner.os }}-build-${{ env.cache-name }}-${{ hashFiles('**/package-lock.json') }}-${{ steps.node.outputs.version }}
+
+      - run: npm install
+
+      - name: Generate env.json
+        run: |
+          printf "%s" "${{ vars.ENV_JSON }}" > env.json
+
+      - name: Cache Serverless Framework dependencies
+        id: cache-serverless
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.serverless
+          key: ${{ runner.os }}-serverless-${{ hashFiles('serverless.yml') }}
+
+      - name: Deploy to AWS Lambda
+        run: npx serverless deploy
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

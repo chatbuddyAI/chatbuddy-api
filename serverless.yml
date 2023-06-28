@@ -1,0 +1,17 @@
+service: chatbuddy-api
+frameworkVersion: '3'
+provider:
+  name: aws
+  runtime: nodejs18.x
+  stage: staging
+  region: eu-west-2
+  timeout: 20
+  memorySize: 2048
+
+functions:
+  hello:
+    handler: handler.hello
+    events:
+      - http: ANY /
+      - http: ANY /{proxy+}
+    environment: ${file(env.json)}

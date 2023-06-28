@@ -4,9 +4,9 @@ const helmet = require('helmet');
 // const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
+const cors = require('cors');
 const hpp = require('hpp');
 
-// const nodemailer = require('nodemailer');
 const helloWorldRouter = require('./routes/helloWorld');
 const globalErrorHandler = require('./exceptions/handler');
 
@@ -18,16 +18,27 @@ const paystackWebhookRouter = require('./routes/paystackWebhookRoutes');
 const otpRouter = require('./routes/otpRoutes');
 
 const AppError = require('./utils/appError');
+const connectToDatabase = require('./utils/connectToDatabase');
+const cronJobs = require('./cron');
+
+console.log(`You are in ${process.env.NODE_ENV} environment.`);
+
+console.log('Connecting to database.');
+connectToDatabase().then(() => {
+	console.log('Scheduling cron operations');
+	cronJobs.start();
+});
 
 const app = express();
 
 //Set security http headers
 app.use(helmet());
 
-console.log(`You are in ${process.env.NODE_ENV} environment.`);
-
 // Development Logging
-if (process.env.NODE_ENV === 'development') {
+if (
+	process.env.NODE_ENV === 'development' ||
+	process.env.NODE_ENV === 'staging'
+) {
 	app.use(morgan('dev')); // prints the request info
 }
 
@@ -40,6 +51,8 @@ if (process.env.NODE_ENV === 'development') {
 
 // Applying the limiter to only api routes
 // app.use('/api', limiter);
+
+app.use(cors());
 
 // Body Parser, allows a post body to be added to the request object
 app.use(express.json());

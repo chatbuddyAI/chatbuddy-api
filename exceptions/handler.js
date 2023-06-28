@@ -67,10 +67,7 @@ module.exports = (error, req, res, next) => {
 		process.env.NODE_ENV === 'staging'
 	) {
 		sendErrorDev(error, res);
-	} else if (
-		process.env.NODE_ENV === 'production' ||
-		process.env.NODE_ENV === 'mobile'
-	) {
+	} else if (process.env.NODE_ENV === 'production') {
 		console.log(`This is the Error name ${error.name}`);
 		// eslint-disable-next-line node/no-unsupported-features/es-syntax
 		let err = { ...error };

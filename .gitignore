@@ -1,2 +1,9 @@
 /node_modules
 config.env
+env.json
+# package directories
+node_modules
+jspm_packages
+
+# Serverless directories
+.serverless
