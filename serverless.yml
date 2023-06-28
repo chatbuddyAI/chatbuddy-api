@@ -1,4 +1,4 @@
-service: chatbuddy-staging-api
+service: chatbuddy-api
 frameworkVersion: '3'
 provider:
   name: aws
@@ -10,7 +10,7 @@ provider:
 
 functions:
   hello:
-    handler: handler.hello
+    handler: handler.initializeApi
     events:
       - http: ANY /
       - http: ANY /{proxy+}

@@ -5,4 +5,4 @@
 const serverless = require('serverless-http');
 const app = require('./app');
 
-exports.hello = serverless(app);
+exports.initializeApi = serverless(app);
