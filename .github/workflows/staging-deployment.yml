@@ -42,10 +42,16 @@ jobs:
         run: |
           printf "%s" "${{ vars.ENV_JSON }}" > env.json
 
-      - name: serverless deploy to aws lambda
-        uses: serverless/github-action@master
+      - name: Cache Serverless Framework dependencies
+        id: cache-serverless
+        uses: actions/cache@v3
         with:
-          args: deploy
+          path: |
+            ~/.serverless
+          key: ${{ runner.os }}-serverless-${{ hashFiles('serverless.yml') }}
+
+      - name: Deploy to AWS Lambda
+        run: npx serverless deploy
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
