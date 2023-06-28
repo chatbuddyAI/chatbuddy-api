@@ -26,8 +26,8 @@ const app = express();
 //Set security http headers
 app.use(helmet());
 
-// app.use(cors());
-// app.use(bodyParser.json());
+app.use(cors());
+app.use(bodyParser.json());
 
 console.log(`You are in ${process.env.NODE_ENV} environment.`);
 

@@ -10,6 +10,6 @@ functions:
   hello:
     handler: handler.hello
     events:
-      - http: ANY /{proxy+}
       - http: ANY /
+      - http: ANY /{proxy+}
     environment: ${file(env.json)}
