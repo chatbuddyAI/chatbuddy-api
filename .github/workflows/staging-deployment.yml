@@ -24,7 +24,7 @@ jobs:
       - name: Get node version
         id: node
         run: |
-          echo "::set-output name=version::$(node -v)"
+          echo "version=$(node -v)" >> $GITHUB_OUTPUT
 
       - name: Cache node modules
         id: cache-npm
