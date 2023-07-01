@@ -3,6 +3,7 @@ const { body, validationResult } = require('express-validator');
 // const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const moment = require('moment');
 const User = require('../models/userModel');
 const AppError = require('../utils/appError');
 const Email = require('../utils/email');
@@ -107,6 +108,9 @@ exports.register = catchAsync(async (req, res, next) => {
 
 	const emailOptions = {
 		fullname: newUser.name,
+		expiryDate: moment(subscriptionData.nextPaymentDate).format(
+			'dddd, MMMM D, YYYY h:mm A'
+		),
 	};
 
 	await Promise.all([
