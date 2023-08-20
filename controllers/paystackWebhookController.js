@@ -116,11 +116,14 @@ exports.webhook = async (req, res, next) => {
 
 				if (subscription) {
 					console.log(`Updating subscription for user:${user.email}`);
-					await Subscription.findOneAndUpdate(
-						{ user: user._id },
-						subscriptionData,
-						{ upsert: true }
-					);
+					await Promise.all([
+						Subscription.findOneAndUpdate(
+							{ user: user._id },
+							subscriptionData,
+							{ upsert: true }
+						),
+						user.update({ isSubscribed: true }, { validateBeforeSave: false }),
+					]);
 				} else {
 					console.log(`Creating subscription for user:${user.email}`);
 					await Promise.all([
