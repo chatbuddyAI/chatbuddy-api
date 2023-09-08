@@ -46,58 +46,16 @@ exports.webhook = async (req, res, next) => {
 				};
 				// Save authorized card details to the database
 
-				if (
-					event.data.metadata.transaction_type &&
-					event.data.metadata.transaction_type !== 'addPaymentMethod'
-				) {
-					console.log('Transaction type is not addPaymentMethod');
-
-					await Card.findOneAndUpdate(
-						{
-							user: user._id,
-							last4: event.data.authorization.last4,
-							expMonth: event.data.authorization.exp_month,
-							expYear: event.data.authorization.exp_year,
-							bin: event.data.authorization.bin,
-						},
-						cardData,
-						{ upsert: true }
-					);
-
-					break;
-				}
-
 				console.log(`Saving card for user:${user.email}`);
-				await Card.create(cardData);
+				await Card.findOneAndUpdate(
+					{
+						user: user._id,
+					},
+					cardData,
+					{ upsert: true }
+				);
+				console.log(`DONE Saving card for user:${user.email}`);
 
-				// if (!user.hasUsedFreeTrial) {
-				// 	console.log(
-				// 		`Subscribing and starting free trial for user:${user.email}`
-				// 	);
-
-				// 	const startDate = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-
-				// 	await Promise.all([
-				// 		paystack.createSubscription({
-				// 			customerEmail: event.data.customer.email,
-				// 			authorizationCode: event.data.authorization.authorization_code,
-				// 			planCode: event.data.metadata.plan_code,
-				// 			startDate,
-				// 		}),
-				// 		user.update(
-				// 			{ hasUsedFreeTrial: true },
-				// 			{ validateBeforeSave: false }
-				// 		),
-				// 	]);
-				// }
-
-				// console.log(
-				// 	`Refunding user:${user.email} the amount of ${
-				// 		event.data.amount / 100
-				// 	}`
-				// );
-
-				// await paystack.refundTransaction(event.data.reference);
 				break;
 			case 'subscription.create':
 				console.log(`${event.event} event for user:${user.email}`);
