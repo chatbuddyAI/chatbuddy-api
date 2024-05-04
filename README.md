@@ -1,5 +1,5 @@
 ﻿# ChatBuddy
- 
+
 ![167-removebg-preview](https://github.com/chatbuddyAI/chatbuddy-api/assets/34938103/69114f00-1a58-4f56-a5ed-33cb62d86738)
 
 ChatBuddy is a chat application that allows users to have conversational experiences with an AI chatbot. It is designed to make the interactions more engaging and personalized for the users. The chatbot utilizes the OpenAI GPT-3 language model to generate its responses. Users can start a new chat and send messages to the chatbot, which will respond in real-time based on the context of the conversation. The chat history is stored and can be reviewed by the user.
@@ -18,10 +18,15 @@ To use the ChatBuddy API, follow these steps:
       NODE_ENV=development
       PORT=7576
 
-      DATABASE=
       DATABASE_LOCAL=mongodb://localhost:27017/chatbuddy
+      # eg mongodb+srv://<USERNAME>:<PASSWORD>@your-cluster.ed5ab.mongodb.net/<DB_NAME>?retryWrites=true&w=majority
+      DATABASE_CONNECION_STRING=
+      DATABASE_NAME=
       DATABASE_USERNAME=
       DATABASE_PASSWORD=
+
+      LOG_PATH=/logs/chatbuddy
+      LOG_LEVEL=
 
       JWT_SECRET=generate-your-long-secret-text-and-put-it-here-it-is-required
       JWT_EXPIRES_IN =1d

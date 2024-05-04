@@ -24,6 +24,7 @@ function assignUniqueRequestLogId(req, res, next) {
 
 function createRequestLogger(req) {
 	const logger = createLogger({
+		level: process.env.LOG_LEVEL || 'info',
 		format: customFormat,
 		defaultMeta: {
 			method: req.method,
