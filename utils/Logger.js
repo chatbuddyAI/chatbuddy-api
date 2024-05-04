@@ -1,6 +1,11 @@
+const os = require('os');
 const { v4: uuidv4 } = require('uuid');
 const { createLogger, format, transports } = require('winston');
+const { Logtail } = require('@logtail/node');
+const { LogtailTransport } = require('@logtail/winston');
 
+const hostname = os.hostname();
+const logtail = new Logtail(process.env.LOGTAIL_SOURCE_TOKEN);
 require('winston-daily-rotate-file');
 
 const { combine, timestamp, metadata, printf } = format;
@@ -30,6 +35,7 @@ function createRequestLogger(req) {
 			method: req.method,
 			path: req.originalUrl,
 			requestLogId: req.requestLogId,
+			hostname: hostname,
 			ipAddress: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
 		},
 		transports: [
@@ -41,6 +47,7 @@ function createRequestLogger(req) {
 				maxSize: '20m',
 				maxFiles: '14d',
 			}),
+			new LogtailTransport(logtail),
 		],
 	});
 
