@@ -6,6 +6,7 @@ const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const cors = require('cors');
 const hpp = require('hpp');
+const httpContext = require('express-http-context');
 
 const helloWorldRouter = require('./routes/helloWorld');
 const globalErrorHandler = require('./exceptions/handler');
@@ -17,6 +18,7 @@ const subscriptionRouter = require('./routes/subscriptionRoutes');
 const paystackWebhookRouter = require('./routes/paystackWebhookRoutes');
 const otpRouter = require('./routes/otpRoutes');
 
+const { assignUniqueRequestLogId, attachLogger } = require('./utils/Logger');
 const AppError = require('./utils/appError');
 const connectToDatabase = require('./utils/connectToDatabase');
 const cronJobs = require('./cron');
@@ -30,6 +32,8 @@ connectToDatabase().then(() => {
 });
 
 const app = express();
+
+app.use(httpContext.middleware);
 
 //Set security http headers
 app.use(helmet());
@@ -74,6 +78,10 @@ app.use(
 
 // Serving static files
 app.use(express.static(`${__dirname}/public`));
+
+app.use(assignUniqueRequestLogId);
+
+app.use(attachLogger);
 
 //Routes
 app.use('/api/v1/helloWorld', helloWorldRouter);

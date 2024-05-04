@@ -19,6 +19,7 @@
 		"cors": "^2.8.5",
 		"dotenv": "^13.0.1",
 		"express": "^4.17.2",
+		"express-http-context": "^1.2.4",
 		"express-mongo-sanitize": "^2.2.0",
 		"express-rate-limit": "^6.3.0",
 		"express-validator": "^6.15.0",
@@ -36,9 +37,12 @@
 		"nodemailer": "^6.9.2",
 		"openai": "^3.2.1",
 		"pug": "^3.0.2",
+		"serilogger": "^0.5.0",
 		"serverless-http": "^3.2.0",
 		"uuid": "^9.0.0",
 		"validator": "^13.9.0",
+		"winston": "^3.10.0",
+		"winston-daily-rotate-file": "^4.7.1",
 		"xss-clean": "^0.1.1"
 	},
 	"devDependencies": {
