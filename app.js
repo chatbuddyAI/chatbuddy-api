@@ -18,16 +18,23 @@ const subscriptionRouter = require('./routes/subscriptionRoutes');
 const paystackWebhookRouter = require('./routes/paystackWebhookRoutes');
 const otpRouter = require('./routes/otpRoutes');
 
-const { assignUniqueRequestLogId, attachLogger } = require('./utils/Logger');
+const {
+	assignUniqueRequestLogId,
+	attachLogger,
+	defaultLogger,
+} = require('./utils/Logger');
+
 const AppError = require('./utils/appError');
 const connectToDatabase = require('./utils/connectToDatabase');
 const cronJobs = require('./cron');
 
-console.log(`You are in ${process.env.NODE_ENV} environment.`);
+const logger = defaultLogger();
 
-console.log('Connecting to database.');
+logger.info(`You are in ${process.env.NODE_ENV} environment.`);
+
+logger.info('Connecting to database.');
 connectToDatabase().then(() => {
-	console.log('Scheduling cron operations');
+	logger.info('Scheduling cron operations');
 	cronJobs.start();
 });
 

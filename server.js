@@ -2,9 +2,13 @@ const dotenv = require('dotenv');
 
 dotenv.config({ path: './config.env' });
 
+const { defaultLogger } = require('./utils/Logger');
+
+const logger = defaultLogger();
+
 process.on('uncaughtException', (err) => {
-	console.log('UNCAUGHT EXCEPTION! Shutting down...');
-	console.log(err.name, err.message);
+	logger.info('UNCAUGHT EXCEPTION! Shutting down...');
+	logger.info(err.name, err.message);
 	process.exit(1);
 });
 
@@ -15,12 +19,12 @@ const app = require('./app');
 const port = process.env.PORT || 4000;
 
 const server = app.listen(port, () => {
-	console.log(`App is running on http://127.0.0.1:${port}`);
+	logger.info(`App is running on http://127.0.0.1:${port}`);
 });
 
 process.on('unhandledRejection', (err) => {
-	console.log('UNHANDLED REJECTION! Shutting down...');
-	console.log(err.name, err.message);
+	logger.info('UNHANDLED REJECTION! Shutting down...');
+	logger.info(err.name, err.message);
 	server.close(() => {
 		process.exit(1);
 	});

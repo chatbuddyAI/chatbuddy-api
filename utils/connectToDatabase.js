@@ -1,6 +1,9 @@
 /* eslint-disable no-restricted-syntax */
 /* eslint-disable no-prototype-builtins */
 const mongoose = require('mongoose');
+const { defaultLogger } = require('./Logger');
+
+const logger = defaultLogger();
 
 mongoose.set('strictQuery', true);
 
@@ -50,11 +53,11 @@ module.exports = async () => {
 				environmentConfig.placeholders
 			);
 		}
-		console.log('Connection string:', dbConnectionString);
+		logger.info('Connection string:', dbConnectionString);
 		await mongoose.connect(dbConnectionString);
-		console.log('DB Connection Successful');
+		logger.info('DB Connection Successful');
 	} catch (error) {
-		console.log('DB Connection Error:', error);
+		logger.info('DB Connection Error:', error);
 		process.exit(1);
 	}
 };

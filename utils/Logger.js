@@ -5,10 +5,14 @@ const { Logtail } = require('@logtail/node');
 const { LogtailTransport } = require('@logtail/winston');
 
 const hostname = os.hostname();
-const logtail = new Logtail(process.env.LOGTAIL_SOURCE_TOKEN);
+
+const logtail = new Logtail(process.env.LOGTAIL_SOURCE_TOKEN || 'wrong_token');
+
 require('winston-daily-rotate-file');
 
 const { combine, timestamp, metadata, printf } = format;
+
+let logTransports = [new transports.Console()];
 
 const customFormat = combine(
 	metadata(),
@@ -22,13 +26,42 @@ const customFormat = combine(
 	)
 );
 
-function assignUniqueRequestLogId(req, res, next) {
-	req.requestLogId = uuidv4();
-	next();
+function setLogChannelTransport() {
+	switch (process.env.LOG_CHANNEL) {
+		case 'logtail':
+			logTransports = logTransports.concat([new LogtailTransport(logtail)]);
+			break;
+		case 'file':
+			logTransports = logTransports.concat([
+				new transports.DailyRotateFile({
+					filename: 'chatbuddy-%DATE%.log',
+					datePattern: 'DD-MM-YYYY',
+					zippedArchive: true,
+					dirname: process.env.LOG_PATH || '/logs/chatbuddy',
+					maxSize: '20m',
+					maxFiles: '14d',
+				}),
+			]);
+			break;
+		default:
+			logTransports = logTransports.concat([
+				new transports.DailyRotateFile({
+					filename: 'chatbuddy-%DATE%.log',
+					datePattern: 'DD-MM-YYYY',
+					zippedArchive: true,
+					dirname: process.env.LOG_PATH || '/logs/chatbuddy',
+					maxSize: '20m',
+					maxFiles: '14d',
+				}),
+				new LogtailTransport(logtail),
+			]);
+			break;
+	}
 }
 
-function createRequestLogger(req) {
-	const logger = createLogger({
+function requestLogger(req) {
+	setLogChannelTransport();
+	return createLogger({
 		level: process.env.LOG_LEVEL || 'info',
 		format: customFormat,
 		defaultMeta: {
@@ -38,36 +71,42 @@ function createRequestLogger(req) {
 			hostname: hostname,
 			ipAddress: req.headers['x-forwarded-for'] || req.connection.remoteAddress,
 		},
-		transports: [
-			new transports.DailyRotateFile({
-				filename: 'chatbuddy-%DATE%.log',
-				datePattern: 'DD-MM-YYYY',
-				zippedArchive: true,
-				dirname: process.env.LOG_PATH || '/logs/chatbuddy',
-				maxSize: '20m',
-				maxFiles: '14d',
-			}),
-			new LogtailTransport(logtail),
-		],
+		transports: logTransports,
 	});
+}
 
-	return logger;
+function defaultLogger() {
+	setLogChannelTransport();
+	return createLogger({
+		level: process.env.LOG_LEVEL || 'info',
+		format: customFormat,
+		defaultMeta: {
+			hostname: hostname,
+		},
+		transports: logTransports,
+	});
+}
+
+function assignUniqueRequestLogId(req, res, next) {
+	req.requestLogId = uuidv4();
+	next();
 }
 
 const attachLogger = (req, res, next) => {
-	const logger = createRequestLogger(req);
+	const reqlogger = requestLogger(req);
 
 	// Log the incoming request
-	logger.info('Request received', { method: req.method, url: req.url });
+	reqlogger.info('Request received', { method: req.method, url: req.url });
 
 	// Attach the logger to the request object for use in controllers
-	req.logger = logger;
+	req.logger = reqlogger;
 
 	next();
 };
 
 module.exports = {
-	createRequestLogger,
+	defaultLogger,
+	requestLogger,
 	assignUniqueRequestLogId,
 	attachLogger,
 };

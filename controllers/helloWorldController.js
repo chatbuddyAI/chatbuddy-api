@@ -1,7 +1,4 @@
-const { createRequestLogger } = require('../utils/Logger');
-
 function test(req) {
-	const logger = createRequestLogger(req);
 	req.logger.info('Hello from the test function');
 }
 
