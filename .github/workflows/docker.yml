@@ -27,12 +27,9 @@ jobs:
 
       - name: Build and push
         uses: docker/build-push-action@v5
-        env:
-          GITHUB_SHA: ${{ github.sha }}
-          APP_NAME: 'chatbuddy'
         with:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/chatbuddy:${{ github.sha }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/chatbuddy:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/${{ env.IMAGE_NAME }}:latest
