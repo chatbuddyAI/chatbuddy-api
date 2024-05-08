@@ -34,5 +34,5 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/${APP_NAME}:${GITHUB_SHA}
-            ${{ secrets.DOCKERHUB_USERNAME }}/${APP_NAME}:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/chatbuddy:${{ github.sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/chatbuddy:latest
