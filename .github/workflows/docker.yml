@@ -3,9 +3,6 @@ name: Docker deployment
 on:
   push:
     branches: ['staging']
-env:
-  GITHUB_SHA: ${{ github.sha }}
-  APP_NAME: 'chatbuddy'
 
 jobs:
   deploy:
@@ -30,6 +27,9 @@ jobs:
 
       - name: Build and push
         uses: docker/build-push-action@v5
+        env:
+          GITHUB_SHA: ${{ github.sha }}
+          APP_NAME: 'chatbuddy'
         with:
           context: .
           push: true
