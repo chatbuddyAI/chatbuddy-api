@@ -1,8 +1,9 @@
 name: Docker deployment
 
-on:
+'on':
   push:
-    branches: ['staging']
+    branches:
+      - staging
 
 jobs:
   deploy:
@@ -29,7 +30,7 @@ jobs:
         uses: docker/build-push-action@v5
         env:
           GITHUB_SHA: ${{ github.sha }}
-          IMAGE_NAME: 'chatbuddy'
+          IMAGE_NAME: chatbuddy
         with:
           context: .
           push: true
