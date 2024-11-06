@@ -35,7 +35,7 @@
 		"node-cron": "^3.0.2",
 		"nodemailer": "^6.9.2",
 		"openai": "^3.2.1",
-		"pug": "^3.0.2",
+		"pug": "^3.0.3",
 		"serverless-http": "^3.2.0",
 		"uuid": "^9.0.0",
 		"validator": "^13.9.0",
